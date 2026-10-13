@@ -1,16 +1,17 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PuzzleBoy.Rules;
 
 namespace PuzzleBoy;
 
 public sealed class PuzzleBoyGame : Game
 {
-    public PuzzleBoyGame()
+    public PuzzleBoyGame(IReadOnlyList<Stage> stages)
     {
         // The manager registers itself as a game service, which keeps it alive.
         _ = new GraphicsDeviceManager(this);
-        Window.Title = "Puzzle Boy";
+        Window.Title = $"Puzzle Boy ({stages.Count} stages)";
         IsMouseVisible = true;
     }
 

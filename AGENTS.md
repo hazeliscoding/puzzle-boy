@@ -31,8 +31,8 @@ These are the working rules for agents in this repo. Puzzle Boy is a standalone,
 ## Code layout
 
 - `src/PuzzleBoy.Rules`: stage parsing and the rules. No MonoGame and no file I/O, so the tests can drive it with plain bytes.
-- `src/PuzzleBoy`: the MonoGame (DesktopGL) game. It finds the player's install and draws. It has no content pipeline; every asset is read at runtime.
-- `tests/PuzzleBoy.Rules.Tests`: xunit.v3 on Microsoft Testing Platform. Test names read as sentences.
+- `src/PuzzleBoy`: the MonoGame (DesktopGL) game. `GameInstall` finds the player's Steam install, or takes the game folder as the first argument, and reads bundles with AssetsTools.NET. It has no content pipeline; every asset is read at runtime.
+- `tests/PuzzleBoy.Tests`: xunit.v3 on Microsoft Testing Platform, covering both projects. Test names read as sentences.
 
 ## Working style
 

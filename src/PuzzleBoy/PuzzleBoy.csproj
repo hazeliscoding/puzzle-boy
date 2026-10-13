@@ -7,7 +7,12 @@
 
   <!-- No MonoGame content pipeline: every asset is read from the player's install at runtime. -->
   <ItemGroup>
+    <PackageReference Include="AssetsTools.NET" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PuzzleBoy.Rules\PuzzleBoy.Rules.csproj" />
   </ItemGroup>
 
 </Project>
