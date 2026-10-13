@@ -11,6 +11,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **The game code is the PS2 original, converted to C#.** The original names survive in the metadata (`pbGame.pushCheck`, `pb_H.pbBackup_t`, the `dds3` engine calls), which makes the decompiled functions readable.
 - **Rules are written as tests.** Each rule becomes a test on a handmade stage, and the code is written from the tests. Pseudocode is never pasted or transliterated into the source.
 - **3D like the original.** The stage is drawn as 3D blocks, with the original's rotating camera and view mode. Rules come first, with plain cubes standing in until M3 adds Jack-o'-Lantern and the original look.
+- **C# on .NET 10 with MonoGame (DesktopGL).** It's code-first with no editor, so the whole game is plain C# that can be tested and reviewed. The rules live in their own library with no MonoGame or file I/O, and its tests are the rule spec. The game reads the player's files with AssetsTools.NET (MIT) for the LZ4HC UnityFS bundles and Fmod5Sharp (MIT) for the Vorbis-in-FSB5 audio. Textures are DXT1.
 - **Stage format** (observed). A stage file is 828 bytes:
   - an int32 character count (1–4) and 4 enable bytes;
   - four int16 x,y start positions, then an int16 x,y goal;
@@ -21,7 +22,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 
 ## Open decisions
 
-To settle before M1: the engine and language, and the brand.
+To settle before M3: the brand. It must be an original mark with no Atlus logos or art, and the README gets its header once the brand exists.
 
 ## M0: Research the rules (current)
 
@@ -38,7 +39,7 @@ To settle before M1: the engine and language, and the brand.
 
 ## M1: Placeholder
 
-- [ ] Scaffold the project with the chosen engine.
+- [ ] Scaffold the .NET solution: the rules library, its tests and the MonoGame game.
 - [ ] Find the Steam install and read the `pazzleboy` bundle at runtime.
 - [ ] Draw one stage from the player's install.
 - [ ] Add a CI guardrail that fails if Atlus data or decompiler output lands in the repo (Unity bundles, `.map` files outside the handmade test stages, Ghidra names such as `FUN_` or `undefined8`), with a positive control.
@@ -63,7 +64,6 @@ To settle before M1: the engine and language, and the brand.
 
 ## Later
 
-- An original brand, with no Atlus logos or art.
 - A stage editor. The original ships a developer editor (`pbEdit`).
 - Custom stage packs.
 
