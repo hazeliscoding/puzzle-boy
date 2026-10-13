@@ -3,10 +3,11 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
-    <RootNamespace>PuzzleBoy.Rules.Tests</RootNamespace>
+    <RootNamespace>PuzzleBoy.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\PuzzleBoy\PuzzleBoy.csproj" />
     <ProjectReference Include="..\..\src\PuzzleBoy.Rules\PuzzleBoy.Rules.csproj" />
   </ItemGroup>
 

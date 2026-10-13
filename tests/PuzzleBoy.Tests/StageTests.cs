@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
+using PuzzleBoy.Rules;
 
-namespace PuzzleBoy.Rules.Tests;
+namespace PuzzleBoy.Tests;
 
 public sealed class StageTests
 {
