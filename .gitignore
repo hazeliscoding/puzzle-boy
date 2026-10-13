@@ -1,0 +1,16 @@
+# Local research workspace. Dumps, method tables, Ghidra snapshots and
+# extracted game data are derived from Atlus's files and stay on this machine.
+/re/
+/extract/
+
+# Editors
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Agent guidelines are committed; this overrides the global gitignore
+!AGENTS.md
+!CLAUDE.md
