@@ -18,7 +18,8 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
   - a 20×20 grid of little-endian uint16 cells: `0x0000` floor, `0x2000` wall, `0x0800` hole, `0x60nn` a cell of block group `nn`.
   - Swivel blocks use `0x80nn` for the center and `0xA0nn` for the arms. That reading is inferred from the layouts and still needs the code to confirm it.
   - The bundle groups stages 00–29 under `pb1` and 30–49 under `pb2`.
-  - Six files (30, 33, 35, 41, 44, 46) shipped with their `0x0A` bytes rewritten as `0D 0A`. Undoing that gives exactly 828 bytes and a sensible stage.
+  - Six files (30, 33, 35, 41, 44, 46) shipped with their `0x0A` bytes rewritten as `0D 0A`. Undoing that gives exactly 828 bytes and a sensible stage. The port's parser undoes it for any file longer than 828 bytes. Whether the original does the same is still an M0 question.
+  - The enable bytes, not the count, pick the characters: stage 08 uses only slot 1, and stage 45 uses slots 2 and 3. Every start and goal sits on floor.
 
 ## Open decisions
 
@@ -39,7 +40,7 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 ## M1: Placeholder
 
-- [ ] Scaffold the .NET solution: the rules library, its tests and the MonoGame game.
+- [x] Scaffold the .NET solution: the rules library, its tests and the MonoGame game. The stage parser came with it, and it reads all 50 shipped stages, including the 6 damaged files.
 - [ ] Find the Steam install and read the `pazzleboy` bundle at runtime.
 - [ ] Draw one stage from the player's install.
 - [ ] Add a CI guardrail that fails if Atlus data or decompiler output lands in the repo (Unity bundles, `.map` files outside the handmade test stages, Ghidra names such as `FUN_` or `undefined8`), with a positive control.
