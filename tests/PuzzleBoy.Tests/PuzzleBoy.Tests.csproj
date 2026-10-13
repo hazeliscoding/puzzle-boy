@@ -4,6 +4,8 @@
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <RootNamespace>PuzzleBoy.Tests</RootNamespace>
+    <!-- Test names read as sentences; they don't need doc comments too. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

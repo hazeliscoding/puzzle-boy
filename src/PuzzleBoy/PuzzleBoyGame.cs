@@ -5,6 +5,9 @@ using PuzzleBoy.Rules;
 
 namespace PuzzleBoy;
 
+/// <summary>
+/// The game window. For now it draws one stage at a time as plain boxes: no rules, no menus, no Atlus art yet.
+/// </summary>
 public sealed class PuzzleBoyGame : Game
 {
     private static readonly Color[] GroupColors =
@@ -22,6 +25,8 @@ public sealed class PuzzleBoyGame : Game
     private KeyboardState _previousKeys;
     private int _current;
 
+    /// <summary>Opens a window on the first of <paramref name="stages"/>.</summary>
+    /// <param name="stages">The stages read from the player's install, in file order. Must not be empty.</param>
     public PuzzleBoyGame(IReadOnlyList<Stage> stages)
     {
         _stages = stages;
@@ -31,6 +36,7 @@ public sealed class PuzzleBoyGame : Game
         UpdateTitle();
     }
 
+    /// <inheritdoc />
     protected override void LoadContent()
     {
         _effect = new BasicEffect(GraphicsDevice);
@@ -39,6 +45,7 @@ public sealed class PuzzleBoyGame : Game
         _cube.SetData(CubeVertices());
     }
 
+    /// <inheritdoc />
     protected override void Update(GameTime gameTime)
     {
         var keys = Keyboard.GetState();
@@ -58,6 +65,7 @@ public sealed class PuzzleBoyGame : Game
         base.Update(gameTime);
     }
 
+    /// <inheritdoc />
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.Black);
@@ -115,6 +123,9 @@ public sealed class PuzzleBoyGame : Game
         }
     }
 
+    /// <summary>
+    /// Whether a wall touches the play area, counting diagonals. The rest of the 20x20 grid is wall too, and drawing it would bury the stage.
+    /// </summary>
     private static bool BordersPlayArea(Stage stage, int x, int y)
     {
         for (var dy = -1; dy <= 1; dy++)
@@ -132,6 +143,7 @@ public sealed class PuzzleBoyGame : Game
         return false;
     }
 
+    /// <summary>Looks down at the play area from the front, far enough back to fit its larger side.</summary>
     private void AimCamera(Stage stage)
     {
         var open = Enumerable.Range(0, Stage.Width * Stage.Height)
@@ -146,6 +158,7 @@ public sealed class PuzzleBoyGame : Game
         _effect.Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 200f);
     }
 
+    /// <summary>Draws the unit cube scaled, optionally rotated about its center, then moved to <paramref name="center"/>.</summary>
     private void DrawBox(Vector3 center, Vector3 size, Color color, Matrix? rotation = null)
     {
         _effect.World = Matrix.CreateScale(size) * (rotation ?? Matrix.Identity) * Matrix.CreateTranslation(center);
@@ -157,6 +170,10 @@ public sealed class PuzzleBoyGame : Game
         }
     }
 
+    /// <summary>
+    /// A unit cube centered on the origin, as 12 triangles with face normals for lighting.
+    /// Faces aren't consistently wound, so drawing uses <see cref="RasterizerState.CullNone"/>.
+    /// </summary>
     private static VertexPositionNormalTexture[] CubeVertices()
     {
         var vertices = new List<VertexPositionNormalTexture>();

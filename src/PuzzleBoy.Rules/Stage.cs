@@ -5,8 +5,13 @@ namespace PuzzleBoy.Rules;
 /// <summary>A stage as the original game stores it in its <c>pbMapNN.map</c> files.</summary>
 public sealed class Stage
 {
+    /// <summary>Columns in every stage's grid.</summary>
     public const int Width = 20;
+
+    /// <summary>Rows in every stage's grid.</summary>
     public const int Height = 20;
+
+    /// <summary>The size of an undamaged stage file, in bytes.</summary>
     public const int FileSize = 828;
 
     private const int Slots = 4;
@@ -25,11 +30,17 @@ public sealed class Stage
     /// <summary>The characters' start positions, in slot order. Slots can be skipped.</summary>
     public IReadOnlyList<(int Slot, int X, int Y)> Characters { get; }
 
+    /// <summary>The goal's position: the spinning blue cube.</summary>
     public (int X, int Y) Goal { get; }
 
     /// <summary>The raw cell value: kind flags in the high byte, block or swivel group in the low byte.</summary>
     public ushort this[int x, int y] => _cells[(y * Width) + x];
 
+    /// <summary>Reads a stage file as it ships in the <c>pazzleboy</c> bundle.</summary>
+    /// <param name="file">The file's bytes. One longer than <see cref="FileSize"/> is taken to carry the CRLF damage and is repaired first.</param>
+    /// <exception cref="InvalidDataException">
+    /// The bytes aren't a stage: the wrong size, no enabled character, a count that disagrees with the enable bytes, or a position off the grid.
+    /// </exception>
     public static Stage Parse(ReadOnlySpan<byte> file)
     {
         if (file.Length > FileSize)

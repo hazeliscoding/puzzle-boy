@@ -9,6 +9,7 @@ public sealed partial class GameInstall
 {
     private GameInstall(string directory) => Directory = directory;
 
+    /// <summary>The game's folder, the one that holds <c>smt3hd.exe</c> and <c>smt3hd_Data</c>.</summary>
     public string Directory { get; }
 
     /// <summary>The game at <paramref name="directory"/>, or null when its Puzzle Boy bundle isn't there.</summary>

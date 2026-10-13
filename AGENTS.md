@@ -40,4 +40,6 @@ These are the working rules for agents in this repo. Puzzle Boy is a standalone,
 - **No AI attribution** in commits or PRs. That means no `Co-Authored-By` trailers, no "Generated with" lines and no session links.
 - **Checks:** automate acceptance checks instead of handing manual steps to the owner. Every check that tests for an absence needs a positive control.
 - **Docs:** short and concise. Prefer editing `ROADMAP.md` over creating new planning documents.
-- **Code comments:** explain why, not what.
+- **Documentation:** every public type and member has an XML doc comment that says what it's for and any contract a caller can't see from the signature: units, ranges, what's null, what throws. Overrides use `<inheritdoc />`. The build fails on a missing one (CS1591); tests are exempt. Give a private helper a summary when its purpose isn't obvious from its name.
+- **Comments in code:** explain why, not what: a constraint, a quirk of the original game, a workaround and its cause. Mark a known limit as `shortcut: <the limit>, <when to upgrade>`.
+- **Pragmatic code:** the smallest change that fully works. No abstractions, options or layers for later, and nothing the current roadmap item doesn't need.
