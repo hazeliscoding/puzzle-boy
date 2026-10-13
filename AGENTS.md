@@ -19,6 +19,7 @@ These are the working rules for agents in this repo. Puzzle Boy is a standalone,
 - Use REA with Ghidra for native analysis. Its MCP server needs `GHIDRA_INSTALL_DIR` (Ghidra 12.1.x), `JAVA_HOME` (JDK 21), a large `GHIDRA_HEADLESS_MAXMEM`, a long `REA_GHIDRA_STARTUP_TIMEOUT_MS`, and `REA_GHIDRA_SEED_FILE` pointing at `re/ghidra-seeds.tsv`.
 - Seeded Ghidra function names are `Type__Method`, such as `pbGame__pushCheck`. `re/methods.tsv` maps each method to its RVA and section.
 - Open `GameAssembly.dll` with the saved snapshot in `re/ghidra/`. Don't re-run the full analysis.
+- The full analysis needs most of a 32 GB machine. On the first try, Java reached 11.4 GB private memory after 52 minutes and left 0.1 GB of RAM free. Run it only when the owner's machine is otherwise idle, launched detached so it outlives the agent session. Never start it while the owner is working.
 - When recording a finding in `ROADMAP.md`, cite the REA Evidence or the in-game observation behind it. Keep observations, inferences and unknowns apart.
 
 ## Commands
