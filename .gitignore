@@ -3,9 +3,18 @@
 /re/
 /extract/
 
+# Build output
+bin/
+obj/
+artifacts/
+TestResults/
+*.binlog
+
 # Editors
+.vs/
 .idea/
 .vscode/
+*.user
 
 # OS files
 .DS_Store

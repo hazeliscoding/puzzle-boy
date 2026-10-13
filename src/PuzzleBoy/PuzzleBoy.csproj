@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>PuzzleBoy</RootNamespace>
+  </PropertyGroup>
+
+  <!-- No MonoGame content pipeline: every asset is read from the player's install at runtime. -->
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" />
+  </ItemGroup>
+
+</Project>
