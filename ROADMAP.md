@@ -10,6 +10,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **Toolchain:** REA with Ghidra 12.1.4 and JDK 21. REA has no IL2CPP support, so method names come from the game's IL2CPP metadata and reach Ghidra through an REA seed file. Il2CppDumper fails on this binary, because the protector renamed the sections that hold IL2CPP's registration tables. The tables use the v24.3 layout, although the metadata reports v24.2.
 - **The game code is the PS2 original, converted to C#.** The original names survive in the metadata (`pbGame.pushCheck`, `pb_H.pbBackup_t`, the `dds3` engine calls), which makes the decompiled functions readable.
 - **Rules are written as tests.** Each rule becomes a test on a handmade stage, and the code is written from the tests. Pseudocode is never pasted or transliterated into the source.
+- **3D like the original.** The stage is drawn as 3D blocks, with the original's rotating camera and view mode. Rules come first, with plain cubes standing in until M3 adds Jack-o'-Lantern and the original look.
 - **Stage format** (observed). A stage file is 828 bytes:
   - an int32 character count (1–4) and 4 enable bytes;
   - four int16 x,y start positions, then an int16 x,y goal;
@@ -20,7 +21,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 
 ## Open decisions
 
-To settle before M1: the engine and language, 3D like the original or top-down 2D, and the brand.
+To settle before M1: the engine and language, and the brand.
 
 ## M0: Research the rules (current)
 
