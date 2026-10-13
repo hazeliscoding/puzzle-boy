@@ -21,6 +21,19 @@ These are the working rules for agents in this repo. Puzzle Boy is a standalone,
 - Open `GameAssembly.dll` with the saved snapshot in `re/ghidra/`. Don't re-run the full analysis.
 - When recording a finding in `ROADMAP.md`, cite the REA Evidence or the in-game observation behind it. Keep observations, inferences and unknowns apart.
 
+## Commands
+
+- `dotnet build PuzzleBoy.slnx` builds everything. Warnings are errors.
+- `dotnet test --solution PuzzleBoy.slnx` runs the tests. They use handmade stages only and never need the game installed.
+- `dotnet format PuzzleBoy.slnx --verify-no-changes` checks the style CI will enforce.
+- `dotnet run --project src/PuzzleBoy` starts the game.
+
+## Code layout
+
+- `src/PuzzleBoy.Rules`: stage parsing and the rules. No MonoGame and no file I/O, so the tests can drive it with plain bytes.
+- `src/PuzzleBoy`: the MonoGame (DesktopGL) game. It finds the player's install and draws. It has no content pipeline; every asset is read at runtime.
+- `tests/PuzzleBoy.Rules.Tests`: xunit.v3 on Microsoft Testing Platform. Test names read as sentences.
+
 ## Working style
 
 - **Commits:** [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `ci:`, `build:`, `refactor:`). Keep each commit atomic, and use a scope when it adds clarity (`feat(rules): …`). Push as you go.
