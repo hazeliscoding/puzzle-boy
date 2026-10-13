@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Linux on purpose: it proves the game builds away from Windows. Tests never need the game installed.
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # Atlus data and decompiler output never enter the repo. The test plants each kind and expects a failure.
+      - name: No game data
+        run: |
+          scripts/check-no-game-data.test.sh
+          scripts/check-no-game-data.sh
+
+      - name: Restore
+        run: dotnet restore PuzzleBoy.slnx
+
+      - name: Build
+        run: dotnet build PuzzleBoy.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --solution PuzzleBoy.slnx --configuration Release --no-build
+
+      - name: Format
+        run: dotnet format PuzzleBoy.slnx --verify-no-changes --no-restore

@@ -43,7 +43,7 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 - [x] Scaffold the .NET solution: the rules library, its tests and the MonoGame game. The stage parser came with it, and it reads all 50 shipped stages, including the 6 damaged files.
 - [x] Find the Steam install and read the `pazzleboy` bundle at runtime. It checks the Steam libraries on Windows, macOS and Linux, and the first argument overrides the search. The bundles carry type trees, so AssetsTools.NET needs no class database.
 - [x] Draw one stage from the player's install. Stages are plain lit boxes: walls only where they border the play area, holes left open, and blocks and swivels colored by group. PageUp and PageDown flip through all 50 stages until the menu exists.
-- [ ] Add a CI guardrail that fails if Atlus data or decompiler output lands in the repo (Unity bundles, `.map` files outside the handmade test stages, Ghidra names such as `FUN_` or `undefined8`), with a positive control.
+- [ ] Add a CI guardrail that fails if Atlus data or decompiler output lands in the repo (Unity bundles, `.map` files outside the handmade test stages, Ghidra's generated function and type names, Il2CppDumper's address comments), with a positive control.
 
 **Done when** a stage from the player's install is on screen, CI passes, and the guardrail fails on a deliberate violation.
 
