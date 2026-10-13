@@ -26,7 +26,8 @@ These are the working rules for agents in this repo. Puzzle Boy is a standalone,
 - `dotnet build PuzzleBoy.slnx` builds everything. Warnings are errors.
 - `dotnet test --solution PuzzleBoy.slnx` runs the tests. They use handmade stages only and never need the game installed.
 - `dotnet format PuzzleBoy.slnx --verify-no-changes` checks the style CI will enforce.
-- `dotnet run --project src/PuzzleBoy` starts the game.
+- `dotnet run --project src/PuzzleBoy` starts the game, finding the install through Steam. `dotnet run --project src/PuzzleBoy -- <game folder>` points it at a copy elsewhere.
+- `scripts/check-no-game-data.sh` fails if tracked files hold Atlus data or decompiler output. `scripts/check-no-game-data.test.sh` is its positive control: it plants each kind in a scratch repo and expects a failure. When you add a new kind, add both a check and a planted case.
 
 ## Code layout
 
