@@ -64,7 +64,7 @@ Read from the decompiled game code through REA. Seven readers each covered one a
 
 **Stages and dialogue** (`pbGame` static constructor ev_c1e5d35be978, `GetStageScriptLabel` ev_3d9eedee78a2, `pbInitGame` ev_b52ab1ade7e0, `pbGotoNewStage` ev_ee2048a293c0, `pbInitMain` ev_9981f13362fa)
 - Level 1 plays 20 stage files in this order: 02, 04, 32, 08, 38, 36, 37, 48, 42, 49, 40, 20, 22, 13, 21, 24, 14, 10, 25, 26. Levels 2 and 3 play only file 00. That's 21 distinct files, and a local scan shows each has exactly one character.
-- Dialogue plays before stages 1, 6, 11, 16 and 20 (labels 0–4 of `pbmsg.bf`). A dialogue can end Puzzle Boy instead of starting the stage. That it's the player choosing to quit is inferred, not confirmed.
+- Dialogue plays before stages 1, 6, 11, 16 and 20 (labels 0–4 of `pbmsg.bf`). Stage dialogue never ends Puzzle Boy; only the quit confirmation does (corrected in M3 findings).
 - Progress inside a level isn't saved, so every visit starts at stage 1. Clearing a stage unlocks one achievement and clearing the last stage another, and finishing level 1 also sets a main-game event flag.
 
 **Loading** (`pbMenu.pbLoadSystemData` ev_1fdd0ae2a9c0, `pbBackup_t.pCopy` ev_b293c2a41557)
@@ -87,6 +87,56 @@ Read from the decompiled game code through REA. Seven readers each covered one a
 - The character-collision check is called with x and y swapped, so another character blocks the mirrored cell. Only multi-character stages could show it, and the original plays none.
 - The swivel check has no grid-edge test, and no shipped swivel touches the edge.
 - Stage 36, the sixth stage played, has a swivel arm resting on a hole (`0xA802` at (8, 10)). The character can't push that arm, the swivel still turns from its other arms, and the hole stays open.
+
+## M3 findings (2026.10.14)
+
+Read through REA by four readers, each re-checked by an adversarial verifier: 94 claims, 66 confirmed, 17 corrected, 10 uncertain, 2 refuted. Only confirmed and corrected claims are recorded. The tick rate comes from gameplay video. The notes and pseudocode stay in `re/`.
+
+**Ticks** (`SteamScreen.SetFrameRate` ev_a822b9618b15, `dds3DefaultMain.Update` ev_c9990f293085)
+- The original runs one game tick per rendered frame, so its speed follows the frame-rate setting and the display.
+- VERIFIED: the HD video runs at 30 ticks/s. Every move lasts a multiple of 8 frames of the 60 fps footage, and stage 1's five-cell walk lasts 40. The port runs at a fixed 30 ticks/s.
+
+**Moves** (`moveChar` ev_e09bc775d13b, `moveBlock` ev_66ac7ea7f7e5, `roundBlock` ev_bbdfedee51eb, `deleteMoveBlock` ev_7fbe3f789bfc, `gameKey1` ev_5a3bbb17b4e4)
+- A cell is 40 units, and cell (x, y) sits at (40x − 380, 40y − 380). A step moves the character 10 units per tick for 4 ticks, linearly. The next input is read on the 4th tick, so holding a direction walks continuously with no repeat delay.
+- A push moves the block with the character over the same 4 ticks. A swivel turns 22.5° per tick for 4 ticks about its center. Both take one more tick before the next input.
+- A fall sinks the block 40 units over 4 ticks. Then the hole becomes floor, SE03 plays, the pad vibrates and the camera shakes for 30 ticks.
+- Facing changes at once to the input direction, even on a bump.
+- Input is ignored for 2 ticks after a stage starts or restarts (`pbInitGame` ev_b52ab1ade7e0).
+
+**Camera and controls** (`gameKey1` ev_a152ec51f1cb, `pbKeyConv.pbGetKeyAction`, `drawMyCharacter` ev_f367edf2c5b6)
+- Directions are screen-relative. Each L1/R1 press turns the view exactly 90° and shifts the key mapping by a quarter turn.
+  - The turn orbits the character 10° per tick for 9 ticks in the normal view, or 12 ticks in the overhead view.
+  - Directions still work during a turn, while further L1, R1, ○ and □ presses wait for it to end.
+- The camera follows the character, with a 60° field of view.
+  - The normal view is pitched 60°, from an offset of (0, 400, −240) rotated with the view.
+  - The overhead view is pitched 90°, from (0, 450, 0).
+  - ○ switches between the two over 3 ticks.
+- △ puts a scroll cursor on the character's cell. Held directions move the cursor and the camera one cell per tick within the grid, and arrows show which ways the cursor can still go.
+- The view direction and the overhead view carry over between stages and restarts. They reset when Puzzle Boy is quit.
+
+**Board** (`pbDraw.drawBlock` ev_913d4de77fec, `drawExit` ev_8df9c1b100d7, the UV tables in `pbDraw`'s static constructor ev_679447282679)
+- Floor cells are 40-unit cubes below y = 0. Holes are empty, so the background shows through.
+- Blocks and swivel cells are 40-unit cubes on top, textured from the `sample1` atlas, with white outlines on their exposed sides. The atlas is 4×2 tiles of 64 px: salmon blocks, grey swivels, and a dome on the swivel center.
+- Walls have no top or body. Each side facing the play area is a floor-height band plus a 50-unit glass band at 20% opacity, outlined in grey.
+- No normals are set, so the board is effectively unlit. That's inferred; the material shaders are asset data.
+- The goal is a 20-unit untextured cube colored (0, 255, 200) at 30% opacity, 20 units up, spinning 1° per tick.
+- The background `BG_pzl` (1920×1080) is a large plane below the board that turns with the view.
+
+**Character** (`pbInitMyCharacterDraw` ev_dc99c6b3c387, `drawMyCharacter` ev_f367edf2c5b6)
+- `dvl0x150` holds two skinned meshes (24 and 8 bones), a lantern on the hand bone, eye quads, a shadow quad and 8 Mecanim clips at 30 samples/s. It's drawn at scale 40.
+- Which clip plays is decided in protected code, so it's UNKNOWN. The video shows an idle loop.
+
+**HUD, menu and dialogue** (`pbStartGame` ev_84039538d4e0, `pbMenu.menuProc` ev_66d6465b0575, `pbInitGame` ev_24cd6dda05ba)
+- The HUD is the `pzlUI` prefab in `common`. The stage counter, "COMPLETE!" and "UNDO" are sprites on the per-language sheet `pzlUI_font01_<lang>`, each banner shown for 30 ticks. The controls bar is the main game's button guide.
+- □ opens a menu of Undo, Restart, Help and Quit. The cursor wraps. SE04 plays on open and accept, SE05 on cancel, SE06 on a cursor move and SE07 on a refusal. Undo is refused when there's no history.
+- Help is one panel of 12 lines: rules and obstacles.
+- Dialogue text is in the per-language bundles, shown in the main game's message window.
+- Quit asks for confirmation: "I'm done for now." leaves, and "No, I'll keep trying." returns. Stage dialogue never ends Puzzle Boy. After the last stage the game ends Puzzle Boy itself, without asking.
+- The only fonts are TextMeshPro SDF atlases (FOT-Matisse ProN B); no TTF or OTF is shipped.
+
+**Sound** (`pbGame.game` ev_c6e6a20a255d, `pbStartMoveBlock`)
+- SE00 step, SE01 push, SE02 turn, SE03 fall, SE08 view change or scroll toggle, SE09 goal; SE04–07 belong to the menu. A bump is silent, and every effect plays at full volume.
+- The music, `JYAKYO02_BGM00`, starts with the minigame and fades out on quit. Its looping and fade length are in protected code.
 
 ## M0: Research the rules (done 2026.10.14)
 
@@ -138,7 +188,8 @@ Read from the decompiled game code through REA. Seven readers each covered one a
 
 ## M3: Presentation and release
 
-- [ ] Answer M2's open control questions from the game's code: how directions map after an L1/R1 turn and by how much the view turns, whether holding a direction repeats, and undo in play. Label each answer as in M2.
+- [x] Answer M2's open control questions from the game's code: how directions map after an L1/R1 turn and by how much the view turns, whether holding a direction repeats, and undo in play. Label each answer as in M2.
+  - CODE: directions follow the view, and each L1/R1 press turns it 90°. Holding a direction walks continuously. Undo works as M0 says. None of it has been seen in play yet. See "M3 findings".
 - [ ] Camera, Jack-o'-Lantern, stage dialogue, music and sound effects.
 - [ ] Menus: undo, retry, help and quit, matching the original's options.
 - [ ] Release builds for Windows, macOS and Linux.
