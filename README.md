@@ -6,7 +6,7 @@ In Nocturne, Puzzle Boy sits deep inside a long RPG. You guide Jack-o'-Lantern t
 
 This project rebuilds the minigame so it runs on its own on Windows, macOS and Linux. It reads the stages, text and sounds from your own copy of *Shin Megami Tensei III Nocturne HD Remaster*.
 
-> **Status:** early development. The original's rules are decoded and implemented, and all 21 stages the original plays can be played from your install, drawn as plain boxes for now. The original look, menus and release builds come next. See [ROADMAP.md](ROADMAP.md).
+> **Status:** early development. The original's rules are decoded and implemented, and all 20 stages can be played from your install, drawn as plain boxes for now. Solutions recorded in the original clear every stage in the port. The original look, menus and release builds come next. See [ROADMAP.md](ROADMAP.md).
 
 ## Bring your own copy
 

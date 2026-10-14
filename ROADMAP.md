@@ -29,6 +29,8 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
   - A swivel turn that would reach past the grid edge is refused. The original would crash, but no swivel touches the edge.
 - **Undo keeps a full copy of the board** for each push or turn, at most 30. The original stores only what changed, and the results are the same.
 - **Rules tests draw their stages as text.** Columns are x and rows are y; the helper turns each drawing into real stage-file bytes, so every test also goes through the parser.
+- **Play ends after stage 20.** Every video and guide returns to the arcade after stage 20, and none reaches file 00, which the code lists for levels 2 and 3. File 00 joins the unused stages in Later.
+- **M2 closes with the in-game checks moved to M3.** The owner's save isn't at Puzzle Boy yet. M3 answers them from the game's code where it reaches them, since the camera and input code is in `.text`, and labels anything inferred.
 
 ## M0 findings (2026.10.14)
 
@@ -115,16 +117,16 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 **Done:** stages 00, 27 and 44 were drawn from the player's install, and stage 44 is a repaired file. CI passed on Linux ([run 38473585277](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38473585277)). Throwaway PR #1 planted a stage file in `docs/`, and CI failed at "No game data" ([run 38473733436](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38473733436)). The PR was closed without merging.
 
-## M2: Playable rules
+## M2: Playable rules (done 2026.10.14)
 
 - [x] Write each M0 rule as a test on a handmade stage. There are 54 rules tests; breaking any of 9 rules on purpose (the swivel's turning sense, the fall, the sweep check, the undo limit, the two-cell step, the hole check, hiding at the goal, wiping undo on clear) fails at least one.
 - [x] Implement movement, pushing, swivel blocks, holes, character switching, the goal, undo and retry (`PuzzleBoy.Rules.Board`).
-- [x] Load and play the 21 stages the original plays, in its order: level 1's 20 stages, then file 00 for levels 2 and 3.
-  - A local search over the port's rules proves 18 of the 21 solvable, from 4 pushes or turns (stage 1) to 109 (file 13).
+- [x] Load and play the original's stages in its order: level 1's 20 stages. Play ends there, as in the original (see Decisions).
+  - A local search over the port's rules proved 18 of 21 files (the 20 stages plus file 00) solvable, from 4 pushes or turns (stage 1) to 109 (file 13).
   - Files 49, 25 and 26 are larger than the search budget (6 million positions), but they use only features the solved stages exercise: multi-cell blocks, holes, and swivels with 1 to 4 arms.
   - Every swivel arm in a played stage is one cell long, so the original's long-arm quirk never applies.
   - VERIFIED: AppMedia's recorded HD solutions clear all 20 level-1 stages in the port, including 49, 25 and 26. That's 2,756 inputs: every stage clears exactly on its last input, and no input is refused. Only the default mapping clears all 20; a second mapping also clears stages 2, 4 and 16. The replay is a local check in `re/research/check/`, since it reads the stages and the guide.
-- [ ] Confirm in the real game what the code can't show. Labels: **VERIFIED** (seen in the HD game or a video of it, or a recorded solution replayed in the port), **CODE** (read from the decompiled game, see M0), **DOCUMENTED** (a guide says so), **INFERRED**, **UNKNOWN**. Sources: a gameplay video of the HD release ([all 20 stages](https://www.youtube.com/watch?v=tEmsZPDJsdc), times below) and [AppMedia's input lists](https://appmedia.jp/megaten3/5551711) (HD, all 20 stages; the guide text stays in `re/`).
+- [x] Confirm in the real game what the code can't show, as far as video and guides reach. The UNKNOWNs below moved to M3. Labels: **VERIFIED** (seen in the HD game or a video of it, or a recorded solution replayed in the port), **CODE** (read from the decompiled game, see M0), **DOCUMENTED** (a guide says so), **INFERRED**, **UNKNOWN**. Sources: a gameplay video of the HD release ([all 20 stages](https://www.youtube.com/watch?v=tEmsZPDJsdc), times below) and [AppMedia's input lists](https://appmedia.jp/megaten3/5551711) (HD, all 20 stages; the guide text stays in `re/`).
   - VERIFIED: the default camera shows +x to the right and +y up the screen, and Up moves toward +y. In stage 1 (0:31) the swivel's +y arm sits above its center, and AppMedia's 22 stage 1 inputs clear the port under this mapping and under none of the other 7. The port drew +y down, a mirror image, until this was fixed.
   - VERIFIED: stage 1 is file 02, and all 20 layouts match the order above; the HUD shows the stage number.
   - VERIFIED and CODE: the Manikin Kid speaks over the board before stages 1 (0:25), 6 (1:20), 11 (3:30), 16 (6:45) and 20 (9:34).
@@ -135,10 +137,11 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 **Done when** the tests pass and, for every stage, a solution found in the original also solves the stage in the port.
 
-**Status:** met for the 20 stages players reach. File 00 has no recorded solution, because no guide or video reaches it. The in-game checks above still have UNKNOWNs.
+**Done:** the tests pass, and recorded HD solutions clear all 20 stages in the port (above).
 
 ## M3: Presentation and release
 
+- [ ] Answer M2's open control questions from the game's code: how directions map after an L1/R1 turn and by how much the view turns, whether holding a direction repeats, and undo in play. Label each answer as in M2.
 - [ ] Camera, Jack-o'-Lantern, stage dialogue, music and sound effects.
 - [ ] Menus: undo, retry, help and quit, matching the original's options.
 - [ ] Release builds for Windows, macOS and Linux.
@@ -149,7 +152,7 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 - A stage editor. The original ships a developer editor (`pbEdit`).
 - Custom stage packs.
-- The 29 stage files the original never plays, as bonus stages. They include all seven multi-character stages (05, 09, 18, 27, 43, 45, 47), so this needs a decision on the swapped collision check first.
+- The 30 stage files the original never plays, file 00 included, as bonus stages. They include all seven multi-character stages (05, 09, 18, 27, 43, 45, 47), so this needs a decision on the swapped collision check first.
 
 ## Not planned
 
