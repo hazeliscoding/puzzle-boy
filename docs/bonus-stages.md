@@ -1,18 +1,18 @@
 # Bonus stages
 
 > [!TIP]
-> **TL;DR:** The game ships 50 stage files and plays 20. The other 30 come after stage 20 in the port, but only the ones a search has solved. Six of the seven stages with several Jack-o'-Lanterns can't be finished under the original's rules, because only the first character can move until it reaches the goal. The port adds a switch key, C, which makes three of them winnable so far.
+> **TL;DR:** The game ships 50 stage files and plays 20. In the port, 23 of the other 30 come after stage 20: every one with a solution that clears the port. Six of the seven stages with several Jack-o'-Lanterns can't be finished under the original's rules, because only the first character can move until it reaches the goal. The port adds a switch key, C, and with it four of them can be won.
 
-**Read time:** 4 minutes · **Status:** M4, in progress · **Code:** `PlayOrder.Bonus`, `Board.Switch`
+**Read time:** 4 minutes · **Status:** M4, done · **Code:** `PlayOrder.Bonus`, `Board.Switch`
 
 ## The 50 files
 
 ```mermaid
-pie title The 50 stage files, as of Oct 14
+pie title The 50 stage files
     "Played by the original" : 20
-    "Unused, solved as shipped" : 15
-    "Unused, solved with the switch" : 3
-    "Unused, not settled yet" : 12
+    "Unused, solved as shipped" : 19
+    "Unused, solved with the switch" : 4
+    "Unused, not settled" : 7
 ```
 
 - The original's code lists file 00 for "levels 2 and 3", but every video and guide ends after stage 20, so 00 counts as unused here.
@@ -25,7 +25,9 @@ pie title The 50 stage files, as of Oct 14
 - Every candidate move ran on the port's real `Board`, built from the real file, so a solution can't rely on a rule the port doesn't have.
 - Breadth-first search finds the fewest pushes. A* takes over when the space gets big, and its counts are upper bounds.
 - A stage is called **unwinnable** only when the search runs out of positions. One that hits the search budget is **not settled**, not lost.
-- Every solution is replayed input by input on a fresh board before anything ships.
+- A second pass stored states compactly and pruned dead positions, such as a block that can never move again or a hole that can never be filled. Before it was trusted, its rules were checked against the real `Board` on 4.7 million single steps.
+- Every solution is replayed input by input on a fresh board before anything ships, and a second, independent replay agreed. 19 of the 23 solutions are proved shortest.
+- Seven files stay out: 16, 17, 18, 23, 27, 28 and 29. Every search on them hit its budget, and none is proved unsolvable.
 
 ## Why six stages are stuck
 
@@ -35,7 +37,7 @@ pie title The 50 stage files, as of Oct 14
 - File 05 shows why. One push can only be made from a dead-end alcove that the block itself seals off, so somebody has to wait in that alcove while the other character brings the block over.
 
 > [!NOTE]
-> **INFERRED:** these stages look designed for a switch that the shipped code doesn't have. With one, 05, 43 and 45 have solutions. 18, 27 and 47 haven't been settled yet.
+> **INFERRED:** these stages look designed for a switch that the shipped code doesn't have. With one, 05, 43, 45 and 47 have solutions; 47 uses all four characters and 10 switches. 18 and 27 haven't been settled.
 
 ## The switch
 
@@ -48,7 +50,7 @@ pie title The 50 stage files, as of Oct 14
 ## Order
 
 - The bonus stages are ordered easiest first, by the pushes and turns in the solution found, with the file number breaking ties. The tutorial-sized ones come first.
-- On Oct 14 that was 18 stages, which play as stages 21 to 38. The list grows as M4's search settles more.
+- That's 23 stages, played as stages 21 to 43. The seven unsettled files stay out until someone finds a solution that clears the port.
 
 ## Where to look
 
