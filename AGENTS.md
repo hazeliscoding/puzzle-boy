@@ -27,12 +27,13 @@ These are the working rules for agents in this repo. Puzzle Boy is a standalone,
 - `dotnet build PuzzleBoy.slnx` builds everything. Warnings are errors.
 - `dotnet test --solution PuzzleBoy.slnx` runs the tests. They use handmade stages only and never need the game installed.
 - `dotnet format PuzzleBoy.slnx --verify-no-changes` checks the style CI will enforce.
-- `dotnet run --project src/PuzzleBoy` starts the game, finding the install through Steam. `dotnet run --project src/PuzzleBoy -- <game folder>` points it at a copy elsewhere.
+- `dotnet run --project src/PuzzleBoy` starts the game, finding the install through Steam. `dotnet run --project src/PuzzleBoy -- <game folder>` points it at a copy elsewhere. Arrow keys or WASD move, Z or Backspace undoes, R retries, PageUp/PageDown skip stages, Escape quits.
 - `scripts/check-no-game-data.sh` fails if tracked files hold Atlus data or decompiler output. `scripts/check-no-game-data.test.sh` is its positive control: it plants each kind in a scratch repo and expects a failure. When you add a new kind, add both a check and a planted case.
 
 ## Code layout
 
-- `src/PuzzleBoy.Rules`: stage parsing and the rules. No MonoGame and no file I/O, so the tests can drive it with plain bytes.
+- `src/PuzzleBoy.Rules`: stage parsing (`Stage`, `Cell`), the rules (`Board`) and the original's play order (`PlayOrder`). No MonoGame and no file I/O, so the tests can drive it with plain bytes.
+- Rules tests draw handmade stages as text with `tests/PuzzleBoy.Tests/Ascii.cs`; its summary has the legend. A rule change starts with a drawing of the case.
 - `src/PuzzleBoy`: the MonoGame (DesktopGL) game. `GameInstall` finds the player's Steam install, or takes the game folder as the first argument, and reads bundles with AssetsTools.NET. It has no content pipeline; every asset is read at runtime.
 - `tests/PuzzleBoy.Tests`: xunit.v3 on Microsoft Testing Platform, covering both projects. Test names read as sentences.
 
