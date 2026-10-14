@@ -15,4 +15,8 @@
     <ProjectReference Include="..\PuzzleBoy.Rules\PuzzleBoy.Rules.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="PuzzleBoy.Tests" />
+  </ItemGroup>
+
 </Project>

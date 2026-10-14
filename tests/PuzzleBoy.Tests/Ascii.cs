@@ -6,6 +6,7 @@ namespace PuzzleBoy.Tests;
 /// <summary>
 /// Handmade stages drawn as text, so rule tests read like the board. Column is x and row is y, so
 /// <see cref="Direction.PlusX"/> moves right and <see cref="Direction.PlusY"/> moves down the drawing.
+/// The game shows +y up the screen, so on screen a drawing appears mirrored top to bottom.
 /// Everything outside the drawing is wall.
 /// </summary>
 /// <remarks>

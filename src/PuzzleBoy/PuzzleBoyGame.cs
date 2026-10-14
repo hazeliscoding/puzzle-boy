@@ -23,8 +23,9 @@ public sealed class PuzzleBoyGame : Game
     private static readonly Color WaitingColor = new(150, 96, 40);
     private static readonly Color GoalColor = new(60, 110, 255);
 
-    // The original's default camera shows +x to the right and +y up the screen (seen in gameplay video), so Up is +y.
-    private static readonly (Keys Key, Direction Direction)[] Moves =
+    // The original's default camera shows +x to the right and +y up the screen (seen in gameplay video, and a guide's
+    // stage 1 inputs clear the port only this way), so Up is +y.
+    internal static readonly (Keys Key, Direction Direction)[] Moves =
     [
         (Keys.Up, Direction.PlusY), (Keys.W, Direction.PlusY),
         (Keys.Right, Direction.PlusX), (Keys.D, Direction.PlusX),
