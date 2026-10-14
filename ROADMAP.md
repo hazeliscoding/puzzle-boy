@@ -118,7 +118,10 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 - [x] Write each M0 rule as a test on a handmade stage. There are 54 rules tests; breaking any of 9 rules on purpose (the swivel's turning sense, the fall, the sweep check, the undo limit, the two-cell step, the hole check, hiding at the goal, wiping undo on clear) fails at least one.
 - [x] Implement movement, pushing, swivel blocks, holes, character switching, the goal, undo and retry (`PuzzleBoy.Rules.Board`).
-- [ ] Load and play the 21 stages the original plays, in its order: level 1's 20 stages, then file 00 for levels 2 and 3.
+- [x] Load and play the 21 stages the original plays, in its order: level 1's 20 stages, then file 00 for levels 2 and 3.
+  - A local search over the port's rules proves 18 of the 21 solvable, from 4 pushes or turns (stage 1) to 109 (file 13).
+  - Files 49, 25 and 26 are larger than the search budget (6 million positions), but they use only features the solved stages exercise: multi-cell blocks, holes, and swivels with 1 to 4 arms.
+  - Every swivel arm in a played stage is one cell long, so the original's long-arm quirk never applies.
 - [ ] Confirm in the real game what the code can't show:
   - which d-pad button is which direction, and how directions change after the camera turns;
   - whether holding a direction repeats;
