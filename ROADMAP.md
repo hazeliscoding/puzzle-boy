@@ -11,7 +11,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **The game code is the PS2 original, converted to C#.** The original names survive in the metadata (`pbGame.pushCheck`, `pb_H.pbBackup_t`, the `dds3` engine calls), which makes the decompiled functions readable.
 - **Rules are written as tests.** Each rule becomes a test on a handmade stage, and the code is written from the tests. Pseudocode is never pasted or transliterated into the source.
 - **3D like the original.** The stage is drawn as 3D blocks, with the original's rotating camera and view mode. Rules come first, with plain cubes standing in until M3 adds Jack-o'-Lantern and the original look.
-- **C# on .NET 10 with MonoGame (DesktopGL).** It's code-first with no editor, so the whole game is plain C# that can be tested and reviewed. The rules live in their own library with no MonoGame or file I/O, and its tests are the rule spec. The game reads the player's files with AssetsTools.NET (MIT) for the LZ4HC UnityFS bundles and Fmod5Sharp (MIT) for the Vorbis-in-FSB5 audio. Textures are DXT1.
+- **C# on .NET 10 with MonoGame (DesktopGL).** It's code-first with no editor, so the whole game is plain C# that can be tested and reviewed. The rules live in their own library with no MonoGame or file I/O, and its tests are the rule spec. The game reads the player's files with AssetsTools.NET (MIT) for the LZ4HC UnityFS bundles and Fmod5Sharp (MIT) for the Vorbis-in-FSB5 audio. Textures are DXT1 (the board atlas) and RGB24 (the backdrop), decoded on the CPU so every platform behaves the same.
 - **Stage format** (observed). A stage file is 828 bytes:
   - an int32 character count (1–4) and 4 enable bytes;
   - four int16 x,y start positions, then an int16 x,y goal;
@@ -195,7 +195,7 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 - [x] Answer M2's open control questions from the game's code: how directions map after an L1/R1 turn and by how much the view turns, whether holding a direction repeats, and undo in play. Label each answer as in M2.
   - CODE: directions follow the view, and each L1/R1 press turns it 90°. Holding a direction walks continuously. Undo works as M0 says. None of it has been seen in play yet. See "M3 findings".
 - [ ] Camera, Jack-o'-Lantern, stage dialogue, music and sound effects.
-  - Done: the 30-tick clock, the move timing, the follow camera with L1/R1, the overhead view and scroll mode.
+  - Done: the 30-tick clock, the move timing, the follow camera with L1/R1, the overhead view and scroll mode. Scroll mode's direction arrows come with the HUD.
   - Done: the board's look: the atlas textures, glass walls, outlines, the goal and the backdrop, all read from the player's install.
 - [ ] Menus: undo, retry, help and quit, matching the original's options.
 - [ ] Release builds for Windows, macOS and Linux.
