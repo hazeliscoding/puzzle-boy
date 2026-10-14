@@ -233,6 +233,7 @@ The stage files the original ships but never plays, after stage 20. See the deci
   - The stronger search stored states compactly and pruned dead positions. Its rules matched the real `Board` on 4.7 million single steps across all 30 files. The solutions and notes stay in `re/`.
 - [x] Play the bonus stages after stage 20, easiest first. The bar shows the switch on multi-character stages, and PageUp/PageDown become a documented control to skip stages.
   - The 23 solved files play as stages 21 to 43, ordered by pushes and turns: 01, 30, 31, 00, 03, 09, 35, 43, 05, 06, 33, 07, 19, 47, 39, 41, 45, 34, 12, 46, 15, 11, 44.
+  - [v0.2.0](https://github.com/hazeliscoding/puzzle-boy/releases/tag/v0.2.0) published them after the start checks passed on all three systems ([run 38639851641](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38639851641)).
 
 **Done when** every bonus stage that ships has a solution that clears it in the port, and the switch's rules have tests.
 
