@@ -36,4 +36,17 @@ internal sealed class MoveAnimation(Move move, (int X, int Y) from)
 
     /// <summary>Advances one tick.</summary>
     public void Tick() => Age++;
+
+    /// <summary>Where character <paramref name="index"/> is drawn, in cells: sliding from its start while its move plays.</summary>
+    public static (float X, float Y) Where(Board board, MoveAnimation? animation, int index)
+    {
+        var c = board.Characters[index];
+        if (animation is null || animation.Move.Mover != index)
+        {
+            return (c.X, c.Y);
+        }
+
+        var slide = animation.Slide;
+        return (animation.From.X + ((c.X - animation.From.X) * slide), animation.From.Y + ((c.Y - animation.From.Y) * slide));
+    }
 }

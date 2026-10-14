@@ -88,6 +88,9 @@ public sealed class Board
     /// <summary>The character the player controls.</summary>
     public Character Active => _characters[_active];
 
+    /// <summary>The index of <see cref="Active"/> in <see cref="Characters"/>.</summary>
+    public int ActiveIndex => _active;
+
     /// <summary>The goal's position.</summary>
     public (int X, int Y) Goal => _stage.Goal;
 
