@@ -221,13 +221,18 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 
 **Done when** the release builds start on all three systems and play stage 1 from the player's install.
 
-## M4: Bonus stages
+## M4: Bonus stages (done 2026.10.14)
 
 The stage files the original ships but never plays, after stage 20. See the decisions above.
 
 - [x] Switch key: C passes control to the next visible character. Undo still returns control to the character that made the undone push or turn. Rules tests first, drawn as text with two characters.
-- [ ] Settle the unknown stages: a stronger search for the 9 capped single-character stages and for 18, 27 and 47 with the switch, run on the port's `Board`. A stage with no solution found stays out.
-- [ ] Play the bonus stages after stage 20, easiest first. The bar shows the switch on multi-character stages, and PageUp/PageDown become a documented control to skip stages.
+- [x] Settle the unknown stages: a stronger search for the 9 capped single-character stages and for 18, 27 and 47 with the switch, run on the port's `Board`. A stage with no solution found stays out.
+  - VERIFIED: 23 of the 30 files have input lists that clear a fresh `Board` built from the real file. Each clears exactly on its last input, with no input refused, and a second, independent replay agreed on every one.
+  - 19 of the 23 counts are proved minimal by exhaustive search. 11, 15, 44 and 47 have a solution, but it isn't proved shortest. 47 needs all four characters and 10 switches.
+  - UNKNOWN: 16, 17, 18, 23, 27, 28 and 29 stay out. Every search on them hit its budget, and none is proved unsolvable. INFERRED: 16 looks unsolvable by a hand argument, but no search confirms it.
+  - The stronger search stored states compactly and pruned dead positions. Its rules matched the real `Board` on 4.7 million single steps across all 30 files. The solutions and notes stay in `re/`.
+- [x] Play the bonus stages after stage 20, easiest first. The bar shows the switch on multi-character stages, and PageUp/PageDown become a documented control to skip stages.
+  - The 23 solved files play as stages 21 to 43, ordered by pushes and turns: 01, 30, 31, 00, 03, 09, 35, 43, 05, 06, 33, 07, 19, 47, 39, 41, 45, 34, 12, 46, 15, 11, 44.
 
 **Done when** every bonus stage that ships has a solution that clears it in the port, and the switch's rules have tests.
 
@@ -238,6 +243,7 @@ The stage files the original ships but never plays, after stage 20. See the deci
 - Discord Rich Presence: the stage you're on ("Stage 7 of 20") and time played, with a setting to turn it off. Needs a Discord application, whose name and image come from the brand (no Atlus art), and an MIT client library such as DiscordRichPresence. It does nothing when Discord isn't running.
 - An Android build. MonoGame targets Android, and the rules library carries over as is. A phone has no Steam install, so the player copies the few bundles Puzzle Boy reads from their PC install (about 85 MB, most of it `common`) and picks them in the app. Needs touch controls: swipe to move, buttons to turn the view.
 - A fifth □ menu item, Bonus, that jumps to the bonus stages. Its label has no text in the game's tables.
+- The seven unsettled stage files (16, 17, 18, 23, 27, 28 and 29), if a stronger search or a person finds a solution that clears the port.
 
 ## Not planned
 
