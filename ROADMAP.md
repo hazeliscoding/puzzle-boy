@@ -120,7 +120,11 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 - Walls have no top or body. Each side facing the play area is a floor-height band plus a 50-unit glass band at 20% opacity, outlined in grey.
 - No normals are set, so the board is effectively unlit. That's inferred; the material shaders are asset data.
 - The goal is a 20-unit untextured cube colored (0, 255, 200) at 30% opacity, 20 units up, spinning 1° per tick.
-- The background `BG_pzl` (1920×1080) is a large plane below the board that turns with the view.
+- The background `BG_pzl` (1920×1080) is a plane the camera code keeps facing the view.
+- VERIFIED in HD footage: block and swivel outlines run along each group's outer top edges, not the bottom edges the code's numbers suggest. The wall panels are closed grey rectangles.
+- VERIFIED against footage: the board is unlit. The floor in the video is within 2 levels of the atlas's floor texel.
+- MEASURED: the backdrop shows 1.55 times larger than fitting a 16:9 screen, with the screen's center over image pixel (960, 372). That's from aligning `BG_pzl` with an overhead-view frame (correlation 0.95), and the port uses it for both views.
+- INFERRED: the goal's color is written as 255, so blending it at 30% saturates to cyan over 70% of what's behind. That's how it glows in the footage.
 
 **Character** (`pbInitMyCharacterDraw` ev_dc99c6b3c387, `drawMyCharacter` ev_f367edf2c5b6)
 - `dvl0x150` holds two skinned meshes (24 and 8 bones), a lantern on the hand bone, eye quads, a shadow quad and 8 Mecanim clips at 30 samples/s. It's drawn at scale 40.
@@ -191,6 +195,8 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 - [x] Answer M2's open control questions from the game's code: how directions map after an L1/R1 turn and by how much the view turns, whether holding a direction repeats, and undo in play. Label each answer as in M2.
   - CODE: directions follow the view, and each L1/R1 press turns it 90°. Holding a direction walks continuously. Undo works as M0 says. None of it has been seen in play yet. See "M3 findings".
 - [ ] Camera, Jack-o'-Lantern, stage dialogue, music and sound effects.
+  - Done: the 30-tick clock, the move timing, the follow camera with L1/R1, the overhead view and scroll mode.
+  - Done: the board's look: the atlas textures, glass walls, outlines, the goal and the backdrop, all read from the player's install.
 - [ ] Menus: undo, retry, help and quit, matching the original's options.
 - [ ] Release builds for Windows, macOS and Linux.
   - `release.yml` builds self-contained archives for win-x64, linux-x64, osx-arm64 and osx-x64 from Linux, and a `v*` tag publishes them. Before publishing, each build must start on its own system in CI and reach the "no game here" message: Windows, Linux and Apple Silicon macOS pass ([run 38579842875](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38579842875)).
