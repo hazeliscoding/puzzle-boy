@@ -12,12 +12,15 @@ namespace PuzzleBoy;
 /// </summary>
 public sealed class PuzzleBoyGame : Game
 {
-    // The input lock after a stage starts or restarts, and how long a clear holds before the next stage, in ticks.
+    // The input lock after a stage starts or restarts, in ticks.
     private const int StartLock = 2;
-    private const int ClearTicks = 32;
 
-    // The original orbits a point half a cell below the character's feet (its model sits 10 units down, the pivot 10 more).
-    private const float PivotHeight = -0.5f;
+    // Ticks from the input that reaches the goal to the next stage: the move ends 3 ticks later, the clear starts
+    // the tick after that and runs 31 times.
+    private const int ClearTicks = 35;
+
+    // The original orbits its model object, which sits 10 units (a quarter cell) below the character's position.
+    private const float PivotHeight = -0.25f;
 
     // Held directions in the order the original reads them (up, down, left, right), as screen directions:
     // 0 up, 1 right, 2 down, 3 left. The camera turns them into grid directions. The original's PC keys are
@@ -103,8 +106,9 @@ public sealed class PuzzleBoyGame : Game
         {
             _lock--;
         }
-        else
+        else if (_animation is null)
         {
+            // The original reads no input at all while a move plays; a press made then is lost, not queued.
             Play(keys);
         }
 
@@ -141,9 +145,20 @@ public sealed class PuzzleBoyGame : Game
         _lock = StartLock;
     }
 
-    /// <summary>One tick of input, read in the original's order: directions first, then the view buttons.</summary>
+    /// <summary>One tick of input, read in the original's order: △, ○, the directions, then L1/R1.</summary>
     private void Play(KeyboardState keys)
     {
+        // shortcut: scroll mode draws no direction arrows yet; they're pzlUI sprites and come with the HUD.
+        if (Pressed(keys, Keys.Tab))
+        {
+            _scroll = _scroll is null ? (_board.Active.X, _board.Active.Y) : null;
+        }
+
+        if (Pressed(keys, Keys.V))
+        {
+            _camera.ToggleAngle();
+        }
+
         foreach (var (key, screen) in Moves)
         {
             if (!keys.IsKeyDown(key))
@@ -157,7 +172,7 @@ public sealed class PuzzleBoyGame : Game
                 var (dx, dy) = Offset(_camera.DirectionFor(screen));
                 _scroll = (Math.Clamp(cursor.X + dx, 0, Stage.Width - 1), Math.Clamp(cursor.Y + dy, 0, Stage.Height - 1));
             }
-            else if (_animation is null)
+            else
             {
                 var me = _board.Active;
                 if (_board.Step(_camera.DirectionFor(screen)) != StepResult.Refused)
@@ -178,23 +193,18 @@ public sealed class PuzzleBoyGame : Game
             _camera.TurnRight();
         }
 
-        if (Pressed(keys, Keys.V))
+        // shortcut: undo and retry are keys until M3's menu, which the original opens with □. Like the menu, they
+        // wait for a move or a turn to end and don't work in scroll mode.
+        if (_animation is not null || _camera.IsTurning || _scroll is not null)
         {
-            _camera.ToggleAngle();
+            return;
         }
 
-        if (Pressed(keys, Keys.Tab))
-        {
-            _scroll = _scroll is null ? (_board.Active.X, _board.Active.Y) : null;
-        }
-
-        // shortcut: undo and retry are keys until M3's menu, which the original reaches with □.
-        if (_animation is null && (Pressed(keys, Keys.Z) || Pressed(keys, Keys.Back)))
+        if (Pressed(keys, Keys.Z) || Pressed(keys, Keys.Back))
         {
             _board.Undo();
         }
-
-        if (_animation is null && Pressed(keys, Keys.R))
+        else if (Pressed(keys, Keys.R))
         {
             _board.Retry();
             _lock = StartLock;

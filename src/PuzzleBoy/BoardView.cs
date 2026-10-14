@@ -93,7 +93,8 @@ internal sealed class BoardView : IDisposable
         }
 
         // The goal is a 20-unit cube centered 20 units up, spinning about its own axis.
-        var spin = Matrix.CreateRotationY(MathHelper.ToRadians(ticks));
+        // Unity's Rotate((0, 1, 0)) turns clockwise seen from above; the port's flipped z needs the opposite sign.
+        var spin = Matrix.CreateRotationY(MathHelper.ToRadians(-ticks));
         var (gx, gy) = board.Goal;
         var goal = Matrix.CreateTranslation(-gx, -0.5f, gy) * spin * Matrix.CreateTranslation(gx, 0.5f, -gy);
         AddBox(_clear, gx, gy, 0.25f, 0.75f, 0.25f, GoalColor, goal, Tiles(Vector4.Zero));
