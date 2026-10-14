@@ -8,7 +8,7 @@ namespace PuzzleBoy;
 /// <summary>
 /// The game window: plays the original's stages in order with its tick rate, move timing, follow camera and board look
 /// (ROADMAP.md, "M3 findings"). Arrow keys or WASD move, Q and E turn the view (L1/R1), V switches to overhead (○),
-/// Tab scrolls (△), F opens the menu (□), Enter or Space confirms, Backspace cancels, Escape quits.
+/// Tab scrolls (△), C switches characters, F opens the menu (□), Enter or Space confirms, Backspace cancels, Escape quits.
 /// </summary>
 public sealed class PuzzleBoyGame : Game
 {
@@ -229,7 +229,7 @@ public sealed class PuzzleBoyGame : Game
         _lock = StartLock;
     }
 
-    /// <summary>One tick of input, read in the original's order: △, ○, the directions, then L1/R1.</summary>
+    /// <summary>One tick of input, read in the original's order: △, ○, the directions, then L1/R1; the port's switch and □ last.</summary>
     private void Play(KeyboardState keys)
     {
         // shortcut: scroll mode draws no direction arrows yet; they're pzlUI sprites and come with the HUD.
@@ -277,6 +277,13 @@ public sealed class PuzzleBoyGame : Game
         }
 
         if ((Pressed(keys, Keys.Q) && _camera.TurnLeft()) || (Pressed(keys, Keys.E) && _camera.TurnRight()))
+        {
+            _sounds.Play(8);
+        }
+
+        // The port's switch, which the original lacks (ROADMAP.md, M4). Its sound is the view change's, since the camera
+        // moves to the new character.
+        if (Pressed(keys, Keys.C) && _animation is null && _scroll is null && _board.Switch())
         {
             _sounds.Play(8);
         }
