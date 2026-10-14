@@ -23,12 +23,12 @@ public sealed class PuzzleBoyGame : Game
     private static readonly Color WaitingColor = new(150, 96, 40);
     private static readonly Color GoalColor = new(60, 110, 255);
 
-    // The camera looks from +z toward -z, so +y on the grid is toward the bottom of the screen.
+    // The original's default camera shows +x to the right and +y up the screen (seen in gameplay video), so Up is +y.
     private static readonly (Keys Key, Direction Direction)[] Moves =
     [
-        (Keys.Down, Direction.PlusY), (Keys.S, Direction.PlusY),
+        (Keys.Up, Direction.PlusY), (Keys.W, Direction.PlusY),
         (Keys.Right, Direction.PlusX), (Keys.D, Direction.PlusX),
-        (Keys.Up, Direction.MinusY), (Keys.W, Direction.MinusY),
+        (Keys.Down, Direction.MinusY), (Keys.S, Direction.MinusY),
         (Keys.Left, Direction.MinusX), (Keys.A, Direction.MinusX),
     ];
 
@@ -126,11 +126,11 @@ public sealed class PuzzleBoyGame : Game
         foreach (var character in _board.Characters.Where(c => c.Visible))
         {
             var color = character == _board.Active ? JackColor : WaitingColor;
-            DrawBox(new Vector3(character.X, 0.4f, character.Y), new Vector3(0.5f, 0.8f, 0.5f), color);
+            DrawBox(At(character.X, character.Y, 0.4f), new Vector3(0.5f, 0.8f, 0.5f), color);
         }
 
         var spin = Matrix.CreateRotationY((float)gameTime.TotalGameTime.TotalSeconds * 2f);
-        DrawBox(new Vector3(_board.Goal.X, 0.5f, _board.Goal.Y), new Vector3(0.45f), GoalColor, spin);
+        DrawBox(At(_board.Goal.X, _board.Goal.Y, 0.5f), new Vector3(0.45f), GoalColor, spin);
 
         base.Draw(gameTime);
     }
@@ -149,22 +149,22 @@ public sealed class PuzzleBoyGame : Game
         var group = GroupColors[Cell.GroupOf(cell) % GroupColors.Length];
         if (kind is not (CellKind.Wall or CellKind.Hole) && (cell & Cell.HoleFlag) == 0)
         {
-            DrawBox(new Vector3(x, -0.05f, y), new Vector3(0.96f, 0.1f, 0.96f), FloorColor);
+            DrawBox(At(x, y, -0.05f), new Vector3(0.96f, 0.1f, 0.96f), FloorColor);
         }
 
         switch (kind)
         {
             case CellKind.Wall when BordersPlayArea(x, y):
-                DrawBox(new Vector3(x, 0.5f, y), Vector3.One, WallColor);
+                DrawBox(At(x, y, 0.5f), Vector3.One, WallColor);
                 break;
             case CellKind.Block:
-                DrawBox(new Vector3(x, 0.45f, y), new Vector3(0.94f, 0.9f, 0.94f), group);
+                DrawBox(At(x, y, 0.45f), new Vector3(0.94f, 0.9f, 0.94f), group);
                 break;
             case CellKind.SwivelCenter:
-                DrawBox(new Vector3(x, 0.6f, y), new Vector3(0.4f, 1.2f, 0.4f), SwivelColor);
+                DrawBox(At(x, y, 0.6f), new Vector3(0.4f, 1.2f, 0.4f), SwivelColor);
                 break;
             case CellKind.SwivelArm:
-                DrawBox(new Vector3(x, 0.4f, y), new Vector3(0.8f, 0.8f, 0.8f), group);
+                DrawBox(At(x, y, 0.4f), new Vector3(0.8f, 0.8f, 0.8f), group);
                 break;
             default:
                 break;
@@ -199,12 +199,18 @@ public sealed class PuzzleBoyGame : Game
             .Where(p => Cell.KindOf(_board[p.X, p.Y]) != CellKind.Wall)
             .ToList();
         var (minX, maxX, minY, maxY) = (open.Min(p => p.X), open.Max(p => p.X), open.Min(p => p.Y), open.Max(p => p.Y));
-        var target = new Vector3((minX + maxX) / 2f, 0, (minY + maxY) / 2f);
+        var target = At((minX + maxX) / 2f, (minY + maxY) / 2f, 0);
         var distance = (Math.Max(maxX - minX, maxY - minY) * 1.1f) + 6f;
 
         _effect.View = Matrix.CreateLookAt(target + new Vector3(0, distance * 0.8f, distance * 0.65f), target, Vector3.Up);
         _effect.Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.1f, 200f);
     }
+
+    /// <summary>
+    /// The world position of grid cell (<paramref name="x"/>, <paramref name="y"/>) at <paramref name="height"/>.
+    /// Grid +y runs toward -z, away from the camera, so it points up the screen as in the original.
+    /// </summary>
+    private static Vector3 At(float x, float y, float height) => new(x, height, -y);
 
     /// <summary>Draws the unit cube scaled, optionally rotated about its center, then moved to <paramref name="center"/>.</summary>
     private void DrawBox(Vector3 center, Vector3 size, Color color, Matrix? rotation = null)
