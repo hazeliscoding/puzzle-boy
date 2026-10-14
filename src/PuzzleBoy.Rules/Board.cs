@@ -113,7 +113,7 @@ public sealed class Board
     /// <summary>Whether a push or turn can be undone. Plain walking is never recorded.</summary>
     public bool CanUndo => _history.Count > 0;
 
-    /// <summary>What the last <see cref="Step"/> moved; null after a refused step, an undo or a retry.</summary>
+    /// <summary>What the last <see cref="Step"/> moved; null after a refused step, a switch, an undo or a retry.</summary>
     public Move? LastMove { get; private set; }
 
     /// <summary>Moves the active character one step, pushing a block or turning a swivel if that's what it walks into.</summary>
@@ -162,6 +162,24 @@ public sealed class Board
         cells.CopyTo(_cells, 0);
         characters.CopyTo(_characters, 0);
         _active = active;
+        return true;
+    }
+
+    /// <summary>
+    /// Hands control to the next visible character, in the order a goal arrival uses. The original has no switch; the
+    /// port adds it for the unused multi-character stages, which can't be finished without one (ROADMAP.md, M4).
+    /// It isn't recorded, so undo still returns control to the character that made the undone push or turn.
+    /// Returns false, changing nothing, on a cleared board or when only one character is left.
+    /// </summary>
+    public bool Switch()
+    {
+        LastMove = null;
+        if (IsCleared || _characters.Count(c => c.Visible) < 2)
+        {
+            return false;
+        }
+
+        PassControl();
         return true;
     }
 
@@ -301,6 +319,12 @@ public sealed class Board
         }
 
         _characters[_active] = Active with { Visible = false };
+        PassControl();
+    }
+
+    /// <summary>Moves control to the next visible character in ascending slot order, wrapping around.</summary>
+    private void PassControl()
+    {
         do
         {
             _active = (_active + 1) % _characters.Length;
