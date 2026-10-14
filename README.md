@@ -31,6 +31,7 @@ The builds aren't signed, so Windows SmartScreen and macOS Gatekeeper may warn b
 - The 50 stage files in the game's `pazzleboy` asset bundle are small binary grids. Their format is decoded and recorded in the roadmap.
 - The rules come from static analysis of the game's code with [REA](https://rea.tools) and Ghidra. The analysis reads only the game's unprotected code and does not bypass its anti-tamper protection.
 - Each rule becomes a test on a handmade stage, and the game is written from those tests, never from decompiler output.
+- [The docs](docs/README.md) walk through all of it, a few minutes per topic: the journey, the architecture, the rules, the timing, reading the game's files, the rendering, the bonus stages and the checks.
 
 ## License
 
