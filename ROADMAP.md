@@ -78,6 +78,7 @@ Read from the decompiled game code through REA. Seven readers each covered one a
 - In HD the walk and push motions are empty, so the model loops its first animation and turns to face each input.
 - The background is `BG_pzl.png` from the `common` bundle. Board textures come from the `sample1.tga` atlas. The goal is an untextured translucent cube spinning 1° per frame, and a cell is 40 world units.
 - Sounds: SE00 step, SE01 push, SE02 turn, SE09 goal, SE04 menu. Music: `JYAKYO02_BGM00`.
+- Seen in gameplay video (see M2): walls are see-through with outlined edges, blocks are salmon, swivels white with a dome on the center, and the goal is cyan. The controls bar reads Move, L1/R1 Rotate, □ Menu, △ Toggle Scroll, ○ Angle. A clear shows "COMPLETE!" and an undo shows "UNDO" with a rewind mark. The camera follows the character on large stages.
 
 **Quirks in the original**
 - The character-collision check is called with x and y swapped, so another character blocks the mirrored cell. Only multi-character stages could show it, and the original plays none.
@@ -122,11 +123,12 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
   - A local search over the port's rules proves 18 of the 21 solvable, from 4 pushes or turns (stage 1) to 109 (file 13).
   - Files 49, 25 and 26 are larger than the search budget (6 million positions), but they use only features the solved stages exercise: multi-cell blocks, holes, and swivels with 1 to 4 arms.
   - Every swivel arm in a played stage is one cell long, so the original's long-arm quirk never applies.
-- [ ] Confirm in the real game what the code can't show:
-  - which d-pad button is which direction, and how directions change after the camera turns;
-  - whether holding a direction repeats;
-  - that the first stage is file 02, and that dialogue appears before stages 1, 6, 11, 16 and 20;
-  - that undo after a push and some walking returns to just before the push.
+- [ ] Confirm in the real game what the code can't show. A gameplay video of the HD release ([all 20 stages](https://www.youtube.com/watch?v=tEmsZPDJsdc), times below) settles part of it:
+  - Seen: stage 1 is file 02, and all 20 layouts match the order above; the HUD shows the stage number.
+  - Seen: the Manikin Kid speaks over the board before stages 1 (0:25), 6 (1:20), 11 (3:30), 16 (6:45) and 20 (9:34).
+  - Seen: the default camera shows +x to the right and +y up the screen. In stage 1 (0:31) the swivel's +y arm sits above its center. The port drew +y down, a mirror image, until this was fixed.
+  - Seen: after stage 20 (11:50) the game returns to the arcade and gives the Magatama Geis. The video never reaches file 00, so when levels 2 and 3 play is still open.
+  - Still open, because video can't show button presses: which way each direction moves after L1/R1 turns the camera, whether holding a direction repeats, and what undo does after walking.
 
 **Done when** the tests pass and, for every stage, a solution found in the original also solves the stage in the port.
 
