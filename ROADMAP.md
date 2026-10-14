@@ -21,6 +21,15 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
   - Six files (30, 33, 35, 41, 44, 46) shipped with their `0x0A` bytes rewritten as `0D 0A`. Undoing that gives exactly 828 bytes and a sensible stage. The port's parser undoes it for any file longer than 828 bytes. The original never loads these files.
   - The enable bytes, not the count, pick the characters: stage 08 uses only slot 1, and stage 45 uses slots 2 and 3. Every start and goal sits on floor.
 
+## Decisions (2026.10.14)
+
+- **The rules engine follows the M0 findings, with three deliberate differences.** None of them can show up in a stage the original plays. Revisit them if the unused stages are ever added.
+  - The character-collision check uses the real cell. The original swaps x and y, but it never plays a stage with two characters.
+  - The two-cell swivel step counts only cells that belong to the swivel. The original compares group ids alone, which would also match floor if a swivel used group id 0, and no stage does.
+  - A swivel turn that would reach past the grid edge is refused. The original would crash, but no swivel touches the edge.
+- **Undo keeps a full copy of the board** for each push or turn, at most 30. The original stores only what changed, and the results are the same.
+- **Rules tests draw their stages as text.** Columns are x and rows are y; the helper turns each drawing into real stage-file bytes, so every test also goes through the parser.
+
 ## M0 findings (2026.10.14)
 
 Read from the decompiled game code through REA. Seven readers each covered one area, and an adversarial reviewer per area re-checked every claim against the pseudocode: 111 claims, 97 confirmed, 10 refuted or corrected, 4 left uncertain. Only the confirmed and corrected claims are recorded here. The IDs are short REA Evidence IDs; the pseudocode and the full results stay in `re/`.
@@ -107,8 +116,8 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 ## M2: Playable rules
 
-- [ ] Write each M0 rule as a test on a handmade stage.
-- [ ] Implement movement, pushing, swivel blocks, holes, character switching, the goal, undo and retry.
+- [x] Write each M0 rule as a test on a handmade stage. There are 54 rules tests; breaking any of 9 rules on purpose (the swivel's turning sense, the fall, the sweep check, the undo limit, the two-cell step, the hole check, hiding at the goal, wiping undo on clear) fails at least one.
+- [x] Implement movement, pushing, swivel blocks, holes, character switching, the goal, undo and retry (`PuzzleBoy.Rules.Board`).
 - [ ] Load and play the 21 stages the original plays, in its order: level 1's 20 stages, then file 00 for levels 2 and 3.
 - [ ] Confirm in the real game what the code can't show:
   - which d-pad button is which direction, and how directions change after the camera turns;
