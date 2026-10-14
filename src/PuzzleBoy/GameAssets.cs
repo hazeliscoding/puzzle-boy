@@ -18,7 +18,7 @@ internal sealed record GameAssets(
     public static GameAssets Read(GameInstall install)
     {
         var text = install.ReadTextAssets("pazzleboy");
-        var stages = PlayOrder.Files.Select(file => (file, Stage.Parse(text[PlayOrder.AssetName(file)]))).ToList();
+        var stages = PlayOrder.Files.Concat(PlayOrder.Bonus).Select(file => (file, Stage.Parse(text[PlayOrder.AssetName(file)]))).ToList();
         var common = install.ReadTextures("common", "BG_pzl", "tone2", "pzlUI01", "pzlUI_font01_ja", "talkUI01");
         var english = install.ReadTextures("ui_tex_en", "pzlUI_font01_en", "buttonUI01_en_common");
         return new GameAssets(
