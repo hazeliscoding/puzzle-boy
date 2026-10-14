@@ -128,7 +128,9 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 
 **Character** (`pbInitMyCharacterDraw` ev_dc99c6b3c387, `drawMyCharacter` ev_f367edf2c5b6)
 - `dvl0x150` holds two skinned meshes (24 and 8 bones), a lantern on the hand bone, eye quads, a shadow quad and 8 Mecanim clips at 30 samples/s. It's drawn at scale 40.
-- Which clip plays is decided in protected code, so it's UNKNOWN. The video shows an idle loop.
+- VERIFIED against footage: the idle is clip `b00`, the controller's default state, at speed 1. It loops every 80 ticks, which is the footage's period, and it correlates 0.65 with three footage loops, against 0.16 or less for every other clip, facing or mirror.
+- VERIFIED: Jack faces the way he moves, yaw 90° × the direction. Before a stage's first input he faces grid −y, toward the default camera. CODE: the facing turns on every accepted direction, even a bump; undo leaves it.
+- INFERRED, fitted to footage: texture × a toon ramp from `tone2` (band 4), lit from screen-left at 1.1× brightness. There's no outline (VERIFIED). The shadow quad subtracts about 80% of its texture, and the lantern's warm glow is added around its hook point `h_fire`. re/m3-jack.md has the fit and the unknowns, such as whether the light turns with the view.
 
 **HUD, menu and dialogue** (`pbStartGame` ev_84039538d4e0, `pbMenu.menuProc` ev_66d6465b0575, `pbInitGame` ev_24cd6dda05ba)
 - The HUD is the `pzlUI` prefab in `common`. The stage counter, "COMPLETE!" and "UNDO" are sprites on the per-language sheet `pzlUI_font01_<lang>`, each banner shown for 30 ticks. The controls bar is the main game's button guide.
@@ -198,6 +200,7 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
   - Done: the 30-tick clock, the move timing, the follow camera with L1/R1, the overhead view and scroll mode. Scroll mode's direction arrows come with the HUD.
   - Done: the board's look: the atlas textures, glass walls, outlines, the goal and the backdrop, all read from the player's install.
   - Done: the sound effects (step, push, turn, fall, view change and goal) and the looping music, with the original's triggers. The menu sounds come with the menu.
+  - Done: Jack-o'-Lantern from the player's install: his skinned model, idle animation, facing, toon shading, shadow and lantern glow.
 - [ ] Menus: undo, retry, help and quit, matching the original's options.
 - [ ] Release builds for Windows, macOS and Linux.
   - `release.yml` builds self-contained archives for win-x64, linux-x64, osx-arm64 and osx-x64 from Linux, and a `v*` tag publishes them. Before publishing, each build must start on its own system in CI and reach the "no game here" message: Windows, Linux and Apple Silicon macOS pass ([run 38579842875](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38579842875)).
