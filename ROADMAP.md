@@ -154,6 +154,7 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 - A stage editor. The original ships a developer editor (`pbEdit`).
 - Custom stage packs.
+- Discord Rich Presence: the stage you're on ("Stage 7 of 20") and time played, with a setting to turn it off. Needs a Discord application, whose name and image come from the brand (no Atlus art), and an MIT client library such as DiscordRichPresence. It does nothing when Discord isn't running.
 - An Android build. MonoGame targets Android, and the rules library carries over as is. A phone has no Steam install, so the player copies the few bundles Puzzle Boy reads from their PC install (about 85 MB, most of it `common`) and picks them in the app. Needs touch controls: swipe to move, buttons to turn the view.
 - The 30 stage files the original never plays, file 00 included, as bonus stages. They include all seven multi-character stages (05, 09, 18, 27, 43, 45, 47), so this needs a decision on the swapped collision check first.
 
