@@ -76,7 +76,11 @@ jobs:
         with:
           name: puzzle-boy
 
+      # The notes go before GitHub's generated changelog. Drop the macOS sentence once someone plays a macOS build.
       - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" puzzle-boy-* --repo "$GITHUB_REPOSITORY" --title "Puzzle Boy $GITHUB_REF_NAME" --generate-notes
+          NOTES: >-
+            You need your own copy of Shin Megami Tensei III Nocturne HD Remaster. Download the archive for your
+            system and see the README's Play section. The macOS builds start in CI, but nobody has played them yet.
+        run: gh release create "$GITHUB_REF_NAME" puzzle-boy-* --repo "$GITHUB_REPOSITORY" --title "Puzzle Boy $GITHUB_REF_NAME" --notes "$NOTES" --generate-notes
