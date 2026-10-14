@@ -225,7 +225,7 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 
 The stage files the original ships but never plays, after stage 20. See the decisions above.
 
-- [ ] Switch key: C passes control to the next visible character. Undo still returns control to the character that made the undone push or turn. Rules tests first, drawn as text with two characters.
+- [x] Switch key: C passes control to the next visible character. Undo still returns control to the character that made the undone push or turn. Rules tests first, drawn as text with two characters.
 - [ ] Settle the unknown stages: a stronger search for the 9 capped single-character stages and for 18, 27 and 47 with the switch, run on the port's `Board`. A stage with no solution found stays out.
 - [ ] Play the bonus stages after stage 20, easiest first. The bar shows the switch on multi-character stages, and PageUp/PageDown become a documented control to skip stages.
 
