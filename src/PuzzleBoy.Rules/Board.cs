@@ -32,6 +32,20 @@ public enum StepResult
     Refused,
 }
 
+/// <summary>What a successful step moved, so the game can animate it; the board has already changed.</summary>
+/// <param name="Result">Walked, pushed or turned; never refused.</param>
+/// <param name="Mover">The index into <see cref="Board.Characters"/> of the character that moved. It may no longer be active.</param>
+/// <param name="Direction">The direction of the step.</param>
+/// <param name="Cells">How far the character moved: 1, or 2 for a swivel's two-cell step.</param>
+/// <param name="Group">The pushed or turned group's id; 0 for a walk.</param>
+/// <param name="Landings">Where the group's cells are now; empty for a walk. After a fall these cells are plain floor.</param>
+/// <param name="Center">The swivel's center, for a turn.</param>
+/// <param name="Turn">For a turn, -1 clockwise or +1 counterclockwise, with x right and y up; 0 otherwise.</param>
+/// <param name="Fell">True when a pushed block fell into the holes under it.</param>
+public sealed record Move(
+    StepResult Result, int Mover, Direction Direction, int Cells, int Group,
+    IReadOnlyList<(int X, int Y)> Landings, (int X, int Y) Center, int Turn, bool Fell);
+
 /// <summary>A character on the board. A character that reaches the goal while others are still out is hidden.</summary>
 /// <param name="Slot">The stage file's slot, 0 to 3.</param>
 /// <param name="X">The column.</param>
@@ -83,9 +97,13 @@ public sealed class Board
     /// <summary>Whether a push or turn can be undone. Plain walking is never recorded.</summary>
     public bool CanUndo => _history.Count > 0;
 
+    /// <summary>What the last <see cref="Step"/> moved; null after a refused step, an undo or a retry.</summary>
+    public Move? LastMove { get; private set; }
+
     /// <summary>Moves the active character one step, pushing a block or turning a swivel if that's what it walks into.</summary>
     public StepResult Step(Direction direction)
     {
+        LastMove = null;
         var me = Active;
         if (IsCleared || (me.X, me.Y) == Goal)
         {
@@ -102,10 +120,11 @@ public sealed class Board
         switch (Cell.KindOf(this[x, y]))
         {
             case CellKind.Floor:
+                LastMove = new Move(StepResult.Walked, _active, direction, 1, 0, [], default, 0, false);
                 MoveActive(dx, dy, 1);
                 return StepResult.Walked;
             case CellKind.Block:
-                return Push(dx, dy, Cell.GroupOf(this[x, y]));
+                return Push(direction, Cell.GroupOf(this[x, y]));
             case CellKind.SwivelArm:
                 return Turn(direction, Cell.GroupOf(this[x, y]));
             default:
@@ -123,6 +142,7 @@ public sealed class Board
 
         var (cells, characters, active) = _history[^1];
         _history.RemoveAt(_history.Count - 1);
+        LastMove = null;
         cells.CopyTo(_cells, 0);
         characters.CopyTo(_characters, 0);
         _active = active;
@@ -149,10 +169,12 @@ public sealed class Board
         _active = 0;
         IsCleared = false;
         _history.Clear();
+        LastMove = null;
     }
 
-    private StepResult Push(int dx, int dy, int group)
+    private StepResult Push(Direction direction, int group)
     {
+        var (dx, dy) = Offset(direction);
         var parts = PartsOf(group);
         foreach (var (x, y) in parts)
         {
@@ -166,10 +188,10 @@ public sealed class Board
         Record();
         var landings = parts.Select(p => (p.X + dx, p.Y + dy)).ToList();
         Shift(parts, landings);
-        MoveActive(dx, dy, 1);
 
         // A block falls only when every one of its cells is over a hole; the holes become plain floor.
-        if (landings.TrueForAll(l => (_cells[Index(l.Item1, l.Item2)] & Cell.HoleFlag) != 0))
+        var fell = landings.TrueForAll(l => (_cells[Index(l.Item1, l.Item2)] & Cell.HoleFlag) != 0);
+        if (fell)
         {
             foreach (var (x, y) in landings)
             {
@@ -177,6 +199,8 @@ public sealed class Board
             }
         }
 
+        LastMove = new Move(StepResult.Pushed, _active, direction, 1, group, landings, default, 0, fell);
+        MoveActive(dx, dy, 1);
         return StepResult.Pushed;
     }
 
@@ -228,6 +252,7 @@ public sealed class Board
 
         Record();
         Shift(parts, landings);
+        LastMove = new Move(StepResult.Turned, _active, direction, steps, group, landings, center, turn, false);
         MoveActive(dx, dy, steps);
         return StepResult.Turned;
     }
