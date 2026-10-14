@@ -14,7 +14,7 @@ public static class PlayOrder
     /// The unused files the port plays after stage 20 (ROADMAP.md, M4): only those with a solution that clears them in
     /// the port, ordered by the pushes and turns it takes, file number breaking ties.
     /// </summary>
-    public static IReadOnlyList<int> Bonus { get; } = [1, 30, 31, 0, 3, 9, 35, 43, 5, 6, 33, 7, 39, 41, 45, 34, 12, 46];
+    public static IReadOnlyList<int> Bonus { get; } = [1, 30, 31, 0, 3, 9, 35, 43, 5, 6, 33, 7, 19, 47, 39, 41, 45, 34, 12, 46, 15, 11, 44];
 
     /// <summary>The TextAsset name of stage file <paramref name="file"/> in the <c>pazzleboy</c> bundle.</summary>
     public static string AssetName(int file) => $"pbMap{file:D2}.map";
