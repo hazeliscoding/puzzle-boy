@@ -29,11 +29,19 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
   - A swivel turn that would reach past the grid edge is refused. The original would crash, but no swivel touches the edge.
 - **Undo keeps a full copy of the board** for each push or turn, at most 30. The original stores only what changed, and the results are the same.
 - **Rules tests draw their stages as text.** Columns are x and rows are y; the helper turns each drawing into real stage-file bytes, so every test also goes through the parser.
-- **Play ends after stage 20.** Every video and guide returns to the arcade after stage 20, and none reaches file 00, which the code lists for levels 2 and 3. File 00 joins the unused stages in Later.
+- **Play ends after stage 20.** Every video and guide returns to the arcade after stage 20, and none reaches file 00, which the code lists for levels 2 and 3. File 00 joins the unused stages in Later. (M4 adds them after stage 20.)
 - **Brand: Pixel Jack.** A 16×16 pixel-art pumpkin in a crooked witch's hat, inspired by SMT's Pyro Jack and drawn from scratch: no Atlus logos or art. The project is for modders and reverse engineers, not a product. The name stays Puzzle Boy, with the trademark notice in the README. The wordmark comes from Silkscreen Bold (SIL OFL 1.1), converted to paths. The palette is pumpkin `#F07F2A`/`#C9581C`, ember `#FFC94A`, hat `#2A2148` (`#4A3B91` on dark), band `#7A4FD0` (`#B497FF` on dark), ink `#1A1426`, cream `#F4EEE2` and night `#15102A`. Files are in `docs/brand/`. The window and executable icons use the dark palette, whose lighter hat reads on both light and dark title bars.
 - **M2 closes with the in-game checks moved to M3.** The owner's save isn't at Puzzle Boy yet. M3 answers them from the game's code where it reaches them, since the camera and input code is in `.text`, and labels anything inferred.
 - **Menu keys and the UI's open questions.** The original's keyboard keys for confirm and cancel are in protected code, so the port picks them: F opens the □ menu (inferred from the original's key tables), Enter or Space confirms, Backspace cancels, and Escape still quits at once. Text uses the face edge fitted to the footage (+0.035) rather than the material's exact value. The port has no stage fade and no mouse in the menu (re/m3-ui.md, section 10).
 - **M3 closes without a macOS play test, and v0.1.0 ships.** Nobody has a Mac. The macOS builds start in CI, and the release notes say nobody has played them yet, so a Mac player can report back.
+- **M4 adds the 30 unused stage files as bonus stages after stage 20.** The original's 20 stages are played first, unchanged. A local survey checked every unused file and searched for solutions with the port's `Board`:
+  - observed: no file duplicates another, and none looks like a test or junk stage;
+  - observed: 14 of the 23 single-character stages have solutions, and 9 hit the search cap (11, 15, 16, 17, 19, 23, 28, 29, 44);
+  - observed: of the seven multi-character stages, only 09 can be finished as shipped. The search exhausts 05, 18, 27, 43, 45 and 47, because only the first character can move until it reaches the goal;
+  - inferred: those six were designed for switching characters, which the shipped code lacks (M0 findings: control passes only on a goal arrival).
+- **A switch key, a deliberate difference.** C hands control to the next visible character, in the order a goal arrival uses, and plays SE08 as the camera moves to it. With a switch, 05, 43 and 45 have solutions; 18, 27 and 47 hit the cap. The original has no switch to copy, so the key, the sound and the bar label are the port's.
+- **The collision check keeps the real cell.** Modelling the original's swapped x and y in all three places it checks for another character changes no result in the survey.
+- **Only stages with a known solution ship, easiest first.** Each bonus stage needs a solution that clears in the port. They're ordered by the pushes and turns in the solution found, so the tutorial-sized files (00, 01, 30, 31) come first.
 
 ## M0 findings (2026.10.14)
 
@@ -213,13 +221,23 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 
 **Done when** the release builds start on all three systems and play stage 1 from the player's install.
 
+## M4: Bonus stages
+
+The stage files the original ships but never plays, after stage 20. See the decisions above.
+
+- [ ] Switch key: C passes control to the next visible character. Undo still returns control to the character that made the undone push or turn. Rules tests first, drawn as text with two characters.
+- [ ] Settle the unknown stages: a stronger search for the 9 capped single-character stages and for 18, 27 and 47 with the switch, run on the port's `Board`. A stage with no solution found stays out.
+- [ ] Play the bonus stages after stage 20, easiest first. The bar shows the switch on multi-character stages, and PageUp/PageDown become a documented control to skip stages.
+
+**Done when** every bonus stage that ships has a solution that clears it in the port, and the switch's rules have tests.
+
 ## Later
 
 - A stage editor. The original ships a developer editor (`pbEdit`).
 - Custom stage packs.
 - Discord Rich Presence: the stage you're on ("Stage 7 of 20") and time played, with a setting to turn it off. Needs a Discord application, whose name and image come from the brand (no Atlus art), and an MIT client library such as DiscordRichPresence. It does nothing when Discord isn't running.
 - An Android build. MonoGame targets Android, and the rules library carries over as is. A phone has no Steam install, so the player copies the few bundles Puzzle Boy reads from their PC install (about 85 MB, most of it `common`) and picks them in the app. Needs touch controls: swipe to move, buttons to turn the view.
-- The 30 stage files the original never plays, file 00 included, as bonus stages. They include all seven multi-character stages (05, 09, 18, 27, 43, 45, 47), so this needs a decision on the swapped collision check first.
+- A fifth □ menu item, Bonus, that jumps to the bonus stages. Its label has no text in the game's tables.
 
 ## Not planned
 
