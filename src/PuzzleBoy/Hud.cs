@@ -14,19 +14,37 @@ internal static class UiLayout
     }
 }
 
+/// <summary>Which controls the bar shows: the original's guide ids PZL01 (play) and PZL02 (scroll mode).</summary>
+internal enum BarSet
+{
+    /// <summary>The bar is off, as during dialogue.</summary>
+    None,
+
+    /// <summary>PZL01: Move, Rotate, Menu, Toggle Scroll, Angle.</summary>
+    Play,
+
+    /// <summary>PZL02: Scroll, Rotate, Toggle Scroll, Angle.</summary>
+    Scroll,
+}
+
 /// <summary>What the HUD shows this tick.</summary>
 /// <param name="Stage">The stage number, 1 to 20.</param>
 /// <param name="Clear">True while COMPLETE! shows.</param>
 /// <param name="Undo">True while UNDO shows.</param>
 /// <param name="Arrows">The scroll arrows to show, one bit per screen direction: 1 up, 2 right, 4 down, 8 left.</param>
 /// <param name="ScrollTicks">Ticks since scroll mode began, for the arrows' bob.</param>
-internal readonly record struct HudState(int Stage, bool Clear, bool Undo, int Arrows, int ScrollTicks);
+/// <param name="Bar">Which controls the bar shows.</param>
+/// <param name="BarTicks">Ticks since the bar came on, for its fade-in.</param>
+internal readonly record struct HudState(int Stage, bool Clear, bool Undo, int Arrows, int ScrollTicks, BarSet Bar, int BarTicks);
 
 /// <summary>The UI sheets the HUD and menus draw from, read from the player's install.</summary>
 /// <param name="Sheet"><c>pzlUI01</c> from <c>common</c>: plates, glows, arrows, the menu and help.</param>
 /// <param name="Words"><c>pzlUI_font01_en</c> from <c>ui_tex_en</c>: STAGE, COMPLETE! and UNDO.</param>
 /// <param name="Digits"><c>pzlUI_font01_ja</c> from <c>common</c>, whose stage digits the original draws.</param>
-internal sealed record UiSheets(TextureData Sheet, TextureData Words, TextureData Digits);
+/// <param name="Keyboard"><c>buttonUI01_en_keyboard</c> from <c>ui_tex_keyboard_en</c>: key icons and the bar's base strip.</param>
+/// <param name="Talk"><c>talkUI01</c> from <c>common</c>: the dialogue window, name plate and choice box.</param>
+/// <param name="Buttons"><c>buttonUI01_en_common</c> from <c>ui_tex_en</c>: the dialogue's advance icon.</param>
+internal sealed record UiSheets(TextureData Sheet, TextureData Words, TextureData Digits, TextureData Keyboard, TextureData Talk, TextureData Buttons);
 
 /// <summary>
 /// The stage counter, COMPLETE!, UNDO and the scroll arrows, at the original's layout (re/m3-ui.md, section 4).
@@ -44,21 +62,61 @@ internal sealed class Hud : IDisposable
         (new(146, 518), new(1304, 808, 72, 72), new(1, 0)),
     ];
 
+    // Key icons on the keyboard sheet (48x48). The original's PC keys: WASD move, Q/E turn, F menu, Tab scroll, V angle.
+    private static readonly Rectangle KeyW = new(1612, 60, 48, 48), KeyA = new(28, 60, 48, 48), KeyS = new(1324, 60, 48, 48), KeyD = new(244, 60, 48, 48);
+    private static readonly Rectangle KeyQ = new(1180, 60, 48, 48), KeyE = new(316, 60, 48, 48), KeyF = new(388, 60, 48, 48), KeyV = new(1540, 60, 48, 48);
+    private static readonly Rectangle KeyTab = new(460, 108, 48, 48);
+
+    // The bar's sets, left to right: key icons and the label's string id.
+    private static readonly (Rectangle[] Keys, string Label)[] PlaySets =
+        [([KeyW, KeyA, KeyS, KeyD], "GUIDE_L0012"), ([KeyQ, KeyE], "GUIDE_L0021"), ([KeyF], "GUIDE_L0028"), ([KeyTab], "GUIDE_L0029"), ([KeyV], "GUIDE_L0032")];
+
+    private static readonly (Rectangle[] Keys, string Label)[] ScrollSets =
+        [([KeyW, KeyA, KeyS, KeyD], "GUIDE_L0016"), ([KeyQ, KeyE], "GUIDE_L0021"), ([KeyTab], "GUIDE_L0029"), ([KeyV], "GUIDE_L0032")];
+
     private readonly GraphicsDevice _device;
     private readonly SpriteBatch _sprites;
     private readonly Texture2D _sheet;
     private readonly Texture2D _words;
     private readonly Texture2D _digits;
+    private readonly Texture2D _keyboard;
+    private readonly TextData _text;
+    private readonly Dictionary<(string Text, float Size, string Material, float X, float Y), (Texture2D? Texture, Point At)> _baked = [];
     private (float Scale, Vector2 Offset) _fit;
 
-    /// <summary>Uploads the sheets.</summary>
-    public Hud(GraphicsDevice device, UiSheets sheets)
+    /// <summary>Uploads the sheets; text is baked on first use.</summary>
+    public Hud(GraphicsDevice device, UiSheets sheets, TextData text)
     {
         _device = device;
         _sprites = new SpriteBatch(device);
         _sheet = BoardView.Upload(device, sheets.Sheet);
         _words = BoardView.Upload(device, sheets.Words);
         _digits = BoardView.Upload(device, sheets.Digits);
+        _keyboard = BoardView.Upload(device, sheets.Keyboard);
+        _text = text;
+    }
+
+    /// <summary>The bar's fade-in: the original's smoothstep 12t^2 - 16t^3 over half a second, t in seconds.</summary>
+    public static float BarOpacity(int ticks)
+    {
+        var t = Math.Min(ticks / 30f, 0.5f);
+        return (12 * t * t) - (16 * t * t * t);
+    }
+
+    /// <summary>
+    /// Lays out the bar's sets from the right: the last label ends at x <paramref name="right"/>, each set is its icons
+    /// then its label, and <paramref name="gap"/> units separate sets. Returns each set's left edge, in set order.
+    /// </summary>
+    public static float[] BarLayout(IReadOnlyList<(int Icons, float Advance)> sets, float right = 1828, float gap = 36, float icon = 48)
+    {
+        var lefts = new float[sets.Count];
+        for (var i = sets.Count - 1; i >= 0; i--)
+        {
+            lefts[i] = right - sets[i].Advance - (icon * sets[i].Icons);
+            right = lefts[i] - gap;
+        }
+
+        return lefts;
     }
 
     /// <summary>The stage number as the counter's two digits: the tens are blank below 10.</summary>
@@ -131,6 +189,10 @@ internal sealed class Hud : IDisposable
         }
 
         _sprites.End();
+        if (state.Bar != BarSet.None)
+        {
+            DrawBar(state.Bar == BarSet.Play ? PlaySets : ScrollSets, BarOpacity(state.BarTicks));
+        }
     }
 
     /// <inheritdoc />
@@ -140,6 +202,62 @@ internal sealed class Hud : IDisposable
         _sheet.Dispose();
         _words.Dispose();
         _digits.Dispose();
+        _keyboard.Dispose();
+        foreach (var (texture, _) in _baked.Values)
+        {
+            texture?.Dispose();
+        }
+    }
+
+    /// <summary>The controls bar: a dark strip, then each set's key icons and label, right to left.</summary>
+    private void DrawBar((Rectangle[] Keys, string Label)[] sets, float opacity)
+    {
+        var labels = sets.Select(s => _text.Strings[s.Label]).ToArray();
+        var lefts = BarLayout([.. sets.Select((s, i) => (s.Keys.Length, TextRenderer.Advance(_text.Font, labels[i], 32)))]);
+        Begin(BlendState.NonPremultiplied);
+        Sprite(_keyboard, new(4, 4, 1508, 52), new(416, 980, 1508, 52), opacity);
+        for (var i = 0; i < sets.Length; i++)
+        {
+            for (var k = 0; k < sets[i].Keys.Length; k++)
+            {
+                Sprite(_keyboard, sets[i].Keys[k], new(lefts[i] + (48 * k), 982, 48, 48), opacity);
+            }
+        }
+
+        Swap(BlendState.AlphaBlend);
+        for (var i = 0; i < sets.Length; i++)
+        {
+            Text(labels[i], 32, "FOT-MatisseProN-B SDF Material", lefts[i] + (48 * sets[i].Keys.Length), 1019.16f, opacity);
+        }
+
+        _sprites.End();
+    }
+
+    /// <summary>
+    /// Draws text baked by <see cref="TextRenderer"/> at a layout pen and baseline, faded by <paramref name="opacity"/>,
+    /// inside an open sprite batch using <see cref="BlendState.AlphaBlend"/>. Bakes are cached; the window doesn't resize.
+    /// </summary>
+    private void Text(string text, float size, string material, float penX, float baseline, float opacity = 1)
+    {
+        var key = (text, size, material, penX, baseline);
+        if (!_baked.TryGetValue(key, out var baked))
+        {
+            var image = TextRenderer.Bake(_text.Font, [_text.Materials[material]], TextRenderer.Runs(text).Select(r => (r.Char, 0)).ToList(), size, penX, baseline, _fit);
+            Texture2D? texture = null;
+            if (image.Width > 0)
+            {
+                texture = new Texture2D(_device, image.Width, image.Height);
+                texture.SetData(image.Rgba);
+            }
+
+            _baked[key] = baked = (texture, new Point(image.X, image.Y));
+        }
+
+        if (baked.Texture is not null)
+        {
+            // Baked text is premultiplied, so fading it scales all four channels.
+            _sprites.Draw(baked.Texture, baked.At.ToVector2(), Color.White * opacity);
+        }
     }
 
     /// <summary>A cubic Hermite segment from p0 (slope m0) to p1 (slope m1) over <paramref name="length"/> seconds, at fraction <paramref name="s"/>.</summary>

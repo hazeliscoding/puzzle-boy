@@ -51,6 +51,7 @@ public sealed class PuzzleBoyGame : Game
     private int _stageTicks;
     private int _undoTicks;
     private int _scrollTicks;
+    private int _barTicks;
 
     /// <summary>Opens a window on the first stage of <paramref name="assets"/>.</summary>
     /// <param name="assets">Everything read from the player's install. Its stage list must not be empty.</param>
@@ -72,7 +73,7 @@ public sealed class PuzzleBoyGame : Game
     protected override void LoadContent()
     {
         _view = new BoardView(GraphicsDevice, _assets.Atlas, _assets.Background, _assets.Character);
-        _hud = new Hud(GraphicsDevice, _assets.Ui);
+        _hud = new Hud(GraphicsDevice, _assets.Ui, _assets.Text);
         _sounds = new Sounds(_assets.Sounds);
         _sounds.StartMusic();
     }
@@ -97,6 +98,7 @@ public sealed class PuzzleBoyGame : Game
         _ticks++;
         _stageTicks++;
         _scrollTicks++;
+        _barTicks++;
         _undoTicks = Math.Max(0, _undoTicks - 1);
         _camera.Tick();
         _animation?.Tick();
@@ -159,7 +161,8 @@ public sealed class PuzzleBoyGame : Game
 
         // COMPLETE! shows from the clear's first tick, the one after the last move ends, for 30 ticks.
         var clear = _board.IsCleared && _clearedFor is >= 4 and < 34;
-        _hud.Draw(new HudState(_current + 1, clear, _undoTicks > 0, ScrollArrows(), _scrollTicks));
+        var bar = _scroll is null ? BarSet.Play : BarSet.Scroll;
+        _hud.Draw(new HudState(_current + 1, clear, _undoTicks > 0, ScrollArrows(), _scrollTicks, bar, _barTicks));
         base.Draw(gameTime);
     }
 
@@ -169,6 +172,9 @@ public sealed class PuzzleBoyGame : Game
         _current = index;
         _board = new Board(_assets.Stages[index].Stage);
         _undoTicks = 0;
+
+        // The bar turns off at a stage change and fades back in.
+        _barTicks = 0;
         _models = [.. _board.Characters.Select(_ => new CharacterModel(_assets.Character))];
         _facings = new Direction?[_board.Characters.Count];
         _stageTicks = 0;
@@ -245,6 +251,7 @@ public sealed class PuzzleBoyGame : Game
         else if (Pressed(keys, Keys.R))
         {
             _board.Retry();
+            _barTicks = 0;
             _facings = new Direction?[_board.Characters.Count];
             _stageTicks = 0;
             _lock = StartLock;
