@@ -123,12 +123,14 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
   - A local search over the port's rules proves 18 of the 21 solvable, from 4 pushes or turns (stage 1) to 109 (file 13).
   - Files 49, 25 and 26 are larger than the search budget (6 million positions), but they use only features the solved stages exercise: multi-cell blocks, holes, and swivels with 1 to 4 arms.
   - Every swivel arm in a played stage is one cell long, so the original's long-arm quirk never applies.
-- [ ] Confirm in the real game what the code can't show. A gameplay video of the HD release ([all 20 stages](https://www.youtube.com/watch?v=tEmsZPDJsdc), times below) settles part of it:
-  - Seen: stage 1 is file 02, and all 20 layouts match the order above; the HUD shows the stage number.
-  - Seen: the Manikin Kid speaks over the board before stages 1 (0:25), 6 (1:20), 11 (3:30), 16 (6:45) and 20 (9:34).
-  - Seen: the default camera shows +x to the right and +y up the screen. In stage 1 (0:31) the swivel's +y arm sits above its center. The port drew +y down, a mirror image, until this was fixed.
-  - Seen: after stage 20 (11:50) the game returns to the arcade and gives the Magatama Geis. The video never reaches file 00, so when levels 2 and 3 play is still open.
-  - Still open, because video can't show button presses: which way each direction moves after L1/R1 turns the camera, whether holding a direction repeats, and what undo does after walking.
+- [ ] Confirm in the real game what the code can't show. Labels: **VERIFIED** (seen in the HD game or a video of it, or a recorded solution replayed in the port), **CODE** (read from the decompiled game, see M0), **DOCUMENTED** (a guide says so), **INFERRED**, **UNKNOWN**. Sources: a gameplay video of the HD release ([all 20 stages](https://www.youtube.com/watch?v=tEmsZPDJsdc), times below) and [AppMedia's input lists](https://appmedia.jp/megaten3/5551711) (HD, all 20 stages; the guide text stays in `re/`).
+  - VERIFIED: the default camera shows +x to the right and +y up the screen, and Up moves toward +y. In stage 1 (0:31) the swivel's +y arm sits above its center, and AppMedia's 22 stage 1 inputs clear the port under this mapping and under none of the other 7. The port drew +y down, a mirror image, until this was fixed.
+  - VERIFIED: stage 1 is file 02, and all 20 layouts match the order above; the HUD shows the stage number.
+  - VERIFIED and CODE: the Manikin Kid speaks over the board before stages 1 (0:25), 6 (1:20), 11 (3:30), 16 (6:45) and 20 (9:34).
+  - VERIFIED: after stage 20 (11:50) the game returns to the arcade and gives the Magatama Geis. No guide mentions more stages. CODE says levels 2 and 3 play file 00; UNKNOWN when, or whether, a player reaches them.
+  - DOCUMENTED: L1/R1 rotate the view and □ opens a menu with undo, retry, help and quit (the HUD at 0:37 and a Japanese guide). INFERRED: directions follow the rotated view, from a guide's warning that rotating breaks its solutions. UNKNOWN: the rotation step, and the exact mapping after a turn.
+  - CODE: undo takes back the last push or turn and discards walking since then, keeps 30, and doesn't record the camera. DOCUMENTED: a wiki says undo takes back "one action that isn't a plain move", and Neoseeker says it has a limit. UNKNOWN in play.
+  - UNKNOWN: whether holding a direction repeats. No guide or video shows it.
 
 **Done when** the tests pass and, for every stage, a solution found in the original also solves the stage in the port.
 
