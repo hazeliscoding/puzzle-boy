@@ -80,8 +80,12 @@ internal sealed class Hud : IDisposable
     private readonly Texture2D _words;
     private readonly Texture2D _digits;
     private readonly Texture2D _keyboard;
+    private readonly Texture2D _talk;
+    private readonly Texture2D _buttons;
     private readonly TextData _text;
-    private readonly Dictionary<(string Text, float Size, string Material, float X, float Y), (Texture2D? Texture, Point At)> _baked = [];
+    private readonly Dictionary<string, (Texture2D? Texture, Point At)> _baked = [];
+    private readonly Dictionary<string, (Texture2D? Texture, Point At)> _typed = [];
+    private (Dialogue Dialogue, int Page)? _typedPage;
     private (float Scale, Vector2 Offset) _fit;
 
     /// <summary>Uploads the sheets; text is baked on first use.</summary>
@@ -93,7 +97,52 @@ internal sealed class Hud : IDisposable
         _words = BoardView.Upload(device, sheets.Words);
         _digits = BoardView.Upload(device, sheets.Digits);
         _keyboard = BoardView.Upload(device, sheets.Keyboard);
+        _talk = BoardView.Upload(device, sheets.Talk);
+        _buttons = BoardView.Upload(device, sheets.Buttons);
         _text = text;
+    }
+
+    /// <summary>
+    /// The dialogue window over the board and HUD (re/m3-ui.md, 5.2): the band, the name plate and name, the typed
+    /// lines and, when a page is done, the advance icon.
+    /// </summary>
+    public void DrawDialogue(Dialogue dialogue)
+    {
+        // The body bakes again as each character appears; those bakes only live as long as their page.
+        if (_typedPage != (dialogue, dialogue.Page))
+        {
+            Clear(_typed);
+            _typedPage = (dialogue, dialogue.Page);
+        }
+
+        var name = _text.Strings[Dialogue.Speaker];
+        Begin(BlendState.NonPremultiplied);
+        Sliced(_talk, new(4, 4, 32, 352), 8, 8, new(-4, 732, 1928, 352), 0.702f * dialogue.WindowOpacity);
+        Sliced(_talk, new(40, 276, 548, 98), 245, 245, new(183, 755, TextRenderer.Advance(_text.Font, name, 53) + 160, 98), 0.498f * dialogue.NameOpacity);
+        Swap(BlendState.AlphaBlend);
+        Text(name, 53, "MsgFont3", 263, 824.1f, dialogue.NameOpacity);
+
+        // Colour tag n picks MsgFont n; 0 is the talk window's own material, which has MsgFont0's colours.
+        string[] materials = ["FOT-MatisseProN-B SDF Material", "MsgFont1", "MsgFont2", "MsgFont3", "MsgFont4", "MsgFont5"];
+        var left = dialogue.Revealed;
+        for (var i = 0; i < dialogue.Lines.Count && left > 0; i++)
+        {
+            var shown = dialogue.Lines[i].Take(left).ToList();
+            left -= shown.Count;
+            Runs(_typed, shown, materials, 53, 213, 890.1f + (60 * i), dialogue.WindowOpacity);
+        }
+
+        if (dialogue.ShowsIcon)
+        {
+            // shortcut: the icon's glow is steady; the original's 3-second talk_ok loop isn't decoded.
+            Swap(BlendState.NonPremultiplied);
+            Sprite(_buttons, new(1944, 152, 100, 100), new(1683, 935, 100, 100));
+            Swap(BlendState.Additive);
+            Sprite(_talk, new(652, 112, 100, 100), new(1683, 935, 100, 100));
+            Sprite(_talk, new(548, 112, 100, 100), new(1683, 935, 100, 100));
+        }
+
+        _sprites.End();
     }
 
     /// <summary>The bar's fade-in: the original's smoothstep 12t^2 - 16t^3 over half a second, t in seconds.</summary>
@@ -203,10 +252,20 @@ internal sealed class Hud : IDisposable
         _words.Dispose();
         _digits.Dispose();
         _keyboard.Dispose();
-        foreach (var (texture, _) in _baked.Values)
+        _talk.Dispose();
+        _buttons.Dispose();
+        Clear(_baked);
+        Clear(_typed);
+    }
+
+    private static void Clear(Dictionary<string, (Texture2D? Texture, Point At)> bakes)
+    {
+        foreach (var (texture, _) in bakes.Values)
         {
             texture?.Dispose();
         }
+
+        bakes.Clear();
     }
 
     /// <summary>The controls bar: a dark strip, then each set's key icons and label, right to left.</summary>
@@ -237,12 +296,17 @@ internal sealed class Hud : IDisposable
     /// Draws text baked by <see cref="TextRenderer"/> at a layout pen and baseline, faded by <paramref name="opacity"/>,
     /// inside an open sprite batch using <see cref="BlendState.AlphaBlend"/>. Bakes are cached; the window doesn't resize.
     /// </summary>
-    private void Text(string text, float size, string material, float penX, float baseline, float opacity = 1)
+    private void Text(string text, float size, string material, float penX, float baseline, float opacity = 1) =>
+        Runs(_baked, [.. text.Select(c => (c, 0))], [material], size, penX, baseline, opacity);
+
+    /// <summary>Draws characters with per-character materials (indices into <paramref name="materials"/>), baking into <paramref name="cache"/>.</summary>
+    private void Runs(Dictionary<string, (Texture2D? Texture, Point At)> cache, List<(char Char, int Material)> runs, string[] materials,
+        float size, float penX, float baseline, float opacity)
     {
-        var key = (text, size, material, penX, baseline);
-        if (!_baked.TryGetValue(key, out var baked))
+        var key = $"{string.Concat(runs.Select(r => $"{r.Char}{r.Material}"))}|{string.Join(',', materials)}|{size}|{penX}|{baseline}";
+        if (!cache.TryGetValue(key, out var baked))
         {
-            var image = TextRenderer.Bake(_text.Font, [_text.Materials[material]], TextRenderer.Runs(text).Select(r => (r.Char, 0)).ToList(), size, penX, baseline, _fit);
+            var image = TextRenderer.Bake(_text.Font, [.. materials.Select(m => _text.Materials[m])], runs, size, penX, baseline, _fit);
             Texture2D? texture = null;
             if (image.Width > 0)
             {
@@ -250,7 +314,7 @@ internal sealed class Hud : IDisposable
                 texture.SetData(image.Rgba);
             }
 
-            _baked[key] = baked = (texture, new Point(image.X, image.Y));
+            cache[key] = baked = (texture, new Point(image.X, image.Y));
         }
 
         if (baked.Texture is not null)
@@ -258,6 +322,23 @@ internal sealed class Hud : IDisposable
             // Baked text is premultiplied, so fading it scales all four channels.
             _sprites.Draw(baked.Texture, baked.At.ToVector2(), Color.White * opacity);
         }
+    }
+
+    /// <summary>
+    /// A sprite cut in three across: fixed borders of <paramref name="left"/> and <paramref name="right"/> texels at each
+    /// end and a stretched middle. A target narrower than both borders shrinks them in proportion, as Unity does.
+    /// </summary>
+    private void Sliced(Texture2D sheet, Rectangle unity, int left, int right, RectangleF layout, float alpha)
+    {
+        var shrink = Math.Min(1, layout.Width / (left + right));
+        var (l, r) = (left * shrink, right * shrink);
+        Sprite(sheet, new(unity.X, unity.Y, left, unity.Height), new(layout.X, layout.Y, l, layout.Height), alpha);
+        if (layout.Width > l + r)
+        {
+            Sprite(sheet, new(unity.X + left, unity.Y, unity.Width - left - right, unity.Height), new(layout.X + l, layout.Y, layout.Width - l - r, layout.Height), alpha);
+        }
+
+        Sprite(sheet, new(unity.Right - right, unity.Y, right, unity.Height), new(layout.X + layout.Width - r, layout.Y, r, layout.Height), alpha);
     }
 
     /// <summary>A cubic Hermite segment from p0 (slope m0) to p1 (slope m1) over <paramref name="length"/> seconds, at fraction <paramref name="s"/>.</summary>

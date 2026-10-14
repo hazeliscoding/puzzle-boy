@@ -41,6 +41,7 @@ public sealed class PuzzleBoyGame : Game
     private KeyboardState _previousKeys;
     private Board _board = null!;
     private MoveAnimation? _animation;
+    private Dialogue? _dialogue;
     private CharacterModel[] _models = [];
     private Direction?[] _facings = [];
     private (int X, int Y)? _scroll;
@@ -122,7 +123,22 @@ public sealed class PuzzleBoyGame : Game
             _animation = null;
         }
 
-        if (_board.IsCleared)
+        if (_dialogue is { } dialogue)
+        {
+            // While the Manikin Kid talks the board takes no input. Enter or Space turns his pages.
+            dialogue.Tick();
+            if (Pressed(keys, Keys.Enter) || Pressed(keys, Keys.Space))
+            {
+                dialogue.Confirm();
+            }
+
+            if (dialogue.Finished)
+            {
+                _dialogue = null;
+                _barTicks = 0;
+            }
+        }
+        else if (_board.IsCleared)
         {
             if (++_clearedFor >= ClearTicks && _current + 1 < _assets.Stages.Count)
             {
@@ -161,8 +177,14 @@ public sealed class PuzzleBoyGame : Game
 
         // COMPLETE! shows from the clear's first tick, the one after the last move ends, for 30 ticks.
         var clear = _board.IsCleared && _clearedFor is >= 4 and < 34;
-        var bar = _scroll is null ? BarSet.Play : BarSet.Scroll;
+        // The controls bar hides while the Manikin Kid talks; his window draws over everything.
+        var bar = _dialogue is not null ? BarSet.None : _scroll is null ? BarSet.Play : BarSet.Scroll;
         _hud.Draw(new HudState(_current + 1, clear, _undoTicks > 0, ScrollArrows(), _scrollTicks, bar, _barTicks));
+        if (_dialogue is not null)
+        {
+            _hud.DrawDialogue(_dialogue);
+        }
+
         base.Draw(gameTime);
     }
 
@@ -171,6 +193,7 @@ public sealed class PuzzleBoyGame : Game
         // The camera's turn and angle carry over between stages, as in the original; scroll mode doesn't.
         _current = index;
         _board = new Board(_assets.Stages[index].Stage);
+        _dialogue = StageDialogue(index + 1);
         _undoTicks = 0;
 
         // The bar turns off at a stage change and fades back in.
@@ -251,12 +274,19 @@ public sealed class PuzzleBoyGame : Game
         else if (Pressed(keys, Keys.R))
         {
             _board.Retry();
+
+            // INFERRED: the original's restart reruns its stage start, so the Manikin Kid talks again.
+            _dialogue = StageDialogue(_current + 1);
             _barTicks = 0;
             _facings = new Direction?[_board.Characters.Count];
             _stageTicks = 0;
             _lock = StartLock;
         }
     }
+
+    /// <summary>The Manikin Kid's pages for <paramref name="stage"/>, or null on a stage he doesn't talk over.</summary>
+    private Dialogue? StageDialogue(int stage) =>
+        Dialogue.Stages.TryGetValue(stage, out var pages) ? new Dialogue(pages.Select(id => _assets.Text.Strings[id])) : null;
 
     /// <summary>The scroll arrows to show: one per screen direction the cursor can still move, as a bit mask.</summary>
     private int ScrollArrows()
