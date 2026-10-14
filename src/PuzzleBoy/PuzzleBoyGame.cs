@@ -8,7 +8,8 @@ namespace PuzzleBoy;
 /// <summary>
 /// The game window: plays the original's stages in order with its tick rate, move timing, follow camera and board look
 /// (ROADMAP.md, "M3 findings"). Arrow keys or WASD move, Q and E turn the view (L1/R1), V switches to overhead (○),
-/// Tab scrolls (△), C switches characters, F opens the menu (□), Enter or Space confirms, Backspace cancels, Escape quits.
+/// Tab scrolls (△), C switches characters, F opens the menu (□), Enter or Space confirms, Backspace cancels,
+/// PageUp/PageDown skip stages, Escape quits.
 /// </summary>
 public sealed class PuzzleBoyGame : Game
 {
@@ -165,7 +166,7 @@ public sealed class PuzzleBoyGame : Game
             Play(keys);
         }
 
-        // Developer shortcut: skip between stages.
+        // PageUp and PageDown skip stages, so the bonus stages don't need 20 stages played first.
         if (Pressed(keys, Keys.PageDown) || Pressed(keys, Keys.PageUp))
         {
             Load((_current + (Pressed(keys, Keys.PageDown) ? 1 : _assets.Stages.Count - 1)) % _assets.Stages.Count);
@@ -188,7 +189,7 @@ public sealed class PuzzleBoyGame : Game
         // COMPLETE! shows from the clear's first tick, the one after the last move ends, for 30 ticks.
         var clear = _board.IsCleared && _clearedFor is >= 4 and < 34;
         // The controls bar hides while the Manikin Kid talks and shows the menu's or help's keys while they're up.
-        var bar = _dialogue is not null ? BarSet.None : _helpOpen ? BarSet.Help : _menuOpen ? BarSet.Menu : _scroll is null ? BarSet.Play : BarSet.Scroll;
+        var bar = _dialogue is not null ? BarSet.None : _helpOpen ? BarSet.Help : _menuOpen ? BarSet.Menu : _scroll is not null ? BarSet.Scroll : _board.Characters.Count(c => c.Visible) > 1 ? BarSet.Switch : BarSet.Play;
         _hud.Draw(new HudState(_current + 1, clear, _undoTicks > 0, ScrollArrows(), _scrollTicks, bar, _barTicks));
         if (_menuOpen)
         {
