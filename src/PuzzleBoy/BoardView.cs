@@ -30,24 +30,21 @@ internal sealed class BoardView : IDisposable
     // The original writes (0, 255, 200, 0.3) as float colors; see the goal's blend in Draw.
     private static readonly Color GoalColor = new(0f, 1f, 1f, 0.3f);
 
-    // shortcut: plain boxes stand in for Jack-o'-Lantern until the model arrives later in M3.
-    private static readonly Color JackColor = new(255, 140, 26);
-    private static readonly Color WaitingColor = new(150, 96, 40);
-
     private readonly GraphicsDevice _device;
     private readonly Texture2D _atlas;
     private readonly Texture2D _background;
     private readonly Texture2D _white;
     private readonly BasicEffect _effect;
     private readonly SpriteBatch _sprites;
+    private readonly CharacterView _characters;
     private readonly List<VertexPositionColorTexture> _tiles = [];
     private readonly List<VertexPositionColorTexture> _solid = [];
     private readonly List<VertexPositionColorTexture> _glass = [];
     private readonly List<VertexPositionColorTexture> _clear = [];
     private Vector3 _eye;
 
-    /// <summary>Uploads the atlas and the backdrop.</summary>
-    public BoardView(GraphicsDevice device, TextureData atlas, TextureData background)
+    /// <summary>Uploads the atlas, the backdrop and the character's textures.</summary>
+    public BoardView(GraphicsDevice device, TextureData atlas, TextureData background, CharacterData character)
     {
         _device = device;
         _atlas = Upload(device, atlas);
@@ -56,6 +53,7 @@ internal sealed class BoardView : IDisposable
         _white.SetData([Color.White]);
         _effect = new BasicEffect(device) { TextureEnabled = true, VertexColorEnabled = true, LightingEnabled = false };
         _sprites = new SpriteBatch(device);
+        _characters = new CharacterView(device, character);
     }
 
     /// <summary>Draws <paramref name="board"/> with <paramref name="animation"/>'s step in progress.</summary>
@@ -64,7 +62,9 @@ internal sealed class BoardView : IDisposable
     /// <param name="view">The camera's view matrix.</param>
     /// <param name="projection">The camera's projection matrix.</param>
     /// <param name="ticks">Ticks since the game started, for the goal's spin of 1° a tick.</param>
-    public void Draw(Board board, MoveAnimation? animation, Matrix view, Matrix projection, int ticks)
+    /// <param name="characters">The characters to draw, already posed.</param>
+    /// <param name="viewYaw">The camera's yaw in degrees (<see cref="ViewCamera.Yaw"/>), which the character's light follows.</param>
+    public void Draw(Board board, MoveAnimation? animation, Matrix view, Matrix projection, int ticks, IReadOnlyList<CharacterModel> characters, float viewYaw)
     {
         _eye = Matrix.Invert(view).Translation;
         _tiles.Clear();
@@ -82,15 +82,6 @@ internal sealed class BoardView : IDisposable
         }
 
         AddMovingParts(board, animation, moving);
-        for (var i = 0; i < board.Characters.Count; i++)
-        {
-            if (board.Characters[i].Visible || animation?.Move.Mover == i)
-            {
-                var (cx, cy) = MoveAnimation.Where(board, animation, i);
-                var color = i == board.ActiveIndex ? JackColor : WaitingColor;
-                AddBox(_solid, cx, cy, 0, 0.8f, 0.25f, color, Matrix.Identity, Tiles(Vector4.Zero));
-            }
-        }
 
         // The goal is a 20-unit cube centered 20 units up, spinning about its own axis.
         // Unity's Rotate((0, 1, 0)) turns clockwise seen from above; the port's flipped z needs the opposite sign.
@@ -108,10 +99,14 @@ internal sealed class BoardView : IDisposable
         _device.BlendState = BlendState.Opaque;
         Submit(_tiles, _atlas);
         Submit(_solid, _white);
+        _characters.DrawModels(characters, view, projection, viewYaw);
+        _characters.DrawShadowsAndGlows(characters, view, projection);
 
         // Glass and the goal blend over everything opaque and don't hide each other.
         _device.DepthStencilState = DepthStencilState.DepthRead;
         _device.BlendState = BlendState.NonPremultiplied;
+        _device.RasterizerState = RasterizerState.CullNone;
+        _device.SamplerStates[0] = SamplerState.LinearWrap;
         Submit(_glass, _atlas);
 
         // The original's goal color is (0, 255, 200) at 30% opacity: blending 0.3 x 255 saturates, leaving cyan
@@ -128,6 +123,7 @@ internal sealed class BoardView : IDisposable
         _white.Dispose();
         _effect.Dispose();
         _sprites.Dispose();
+        _characters.Dispose();
     }
 
     /// <summary>The cells of the group the current step moves, drawn on their own while it plays.</summary>
@@ -328,7 +324,7 @@ internal sealed class BoardView : IDisposable
     }
 
     /// <summary>Uploads every mip level, keeping Unity's row order so Unity's UVs sample the same texels.</summary>
-    private static Texture2D Upload(GraphicsDevice device, TextureData data)
+    internal static Texture2D Upload(GraphicsDevice device, TextureData data)
     {
         var full = (int)Math.Log2(Math.Max(data.Width, data.Height)) + 1;
         var texture = new Texture2D(device, data.Width, data.Height, data.Levels.Count == full, SurfaceFormat.Color);

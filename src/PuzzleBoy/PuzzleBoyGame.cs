@@ -37,29 +37,35 @@ public sealed class PuzzleBoyGame : Game
     private readonly TextureData _atlas;
     private readonly TextureData _background;
     private readonly IReadOnlyDictionary<string, SoundData> _soundData;
+    private readonly CharacterData _character;
     private readonly ViewCamera _camera = new();
     private BoardView _view = null!;
     private Sounds _sounds = null!;
     private KeyboardState _previousKeys;
     private Board _board = null!;
     private MoveAnimation? _animation;
+    private CharacterModel[] _models = [];
+    private Direction?[] _facings = [];
     private (int X, int Y)? _scroll;
     private int _current;
     private int _lock;
     private int _clearedFor;
     private int _ticks;
+    private int _stageTicks;
 
     /// <summary>Opens a window on the first of <paramref name="stages"/>.</summary>
     /// <param name="stages">The stages to play in order, each with its file number. Must not be empty.</param>
     /// <param name="atlas">The board atlas, <c>sample1</c> from the <c>pazzleboy</c> bundle.</param>
     /// <param name="background">The backdrop, <c>BG_pzl</c> from the <c>common</c> bundle.</param>
     /// <param name="sounds">The sound effects and music from the <c>pazzleboy</c> bundle, by clip name.</param>
-    public PuzzleBoyGame(IReadOnlyList<(int File, Stage Stage)> stages, TextureData atlas, TextureData background, IReadOnlyDictionary<string, SoundData> sounds)
+    /// <param name="character">Jack-o'-Lantern, from the <c>dvl0x150</c> bundle.</param>
+    internal PuzzleBoyGame(IReadOnlyList<(int File, Stage Stage)> stages, TextureData atlas, TextureData background, IReadOnlyDictionary<string, SoundData> sounds, CharacterData character)
     {
         _stages = stages;
         _atlas = atlas;
         _background = background;
         _soundData = sounds;
+        _character = character;
 
         // The manager registers itself as a game service, which keeps it alive.
         _ = new GraphicsDeviceManager(this) { PreferredBackBufferWidth = 1280, PreferredBackBufferHeight = 720 };
@@ -74,7 +80,7 @@ public sealed class PuzzleBoyGame : Game
     /// <inheritdoc />
     protected override void LoadContent()
     {
-        _view = new BoardView(GraphicsDevice, _atlas, _background);
+        _view = new BoardView(GraphicsDevice, _atlas, _background, _character);
         _sounds = new Sounds(_soundData);
         _sounds.StartMusic();
     }
@@ -96,6 +102,7 @@ public sealed class PuzzleBoyGame : Game
         }
 
         _ticks++;
+        _stageTicks++;
         _camera.Tick();
         _animation?.Tick();
         if (_animation is { FallStarts: true })
@@ -153,7 +160,7 @@ public sealed class PuzzleBoyGame : Game
         var (px, py) = _scroll is { } cursor ? cursor : MoveAnimation.Where(_board, _animation, _board.ActiveIndex);
         var view = _camera.View(new Vector3(px, PivotHeight, -py));
         var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(60), GraphicsDevice.Viewport.AspectRatio, 0.05f, 30f);
-        _view.Draw(_board, _animation, view, projection, _ticks);
+        _view.Draw(_board, _animation, view, projection, _ticks, PosedModels(), _camera.Yaw);
         base.Draw(gameTime);
     }
 
@@ -162,6 +169,9 @@ public sealed class PuzzleBoyGame : Game
         // The camera's turn and angle carry over between stages, as in the original; scroll mode doesn't.
         _current = index;
         _board = new Board(_stages[index].Stage);
+        _models = [.. _board.Characters.Select(_ => new CharacterModel(_character))];
+        _facings = new Direction?[_board.Characters.Count];
+        _stageTicks = 0;
         _animation = null;
         _scroll = null;
         _clearedFor = 0;
@@ -198,9 +208,12 @@ public sealed class PuzzleBoyGame : Game
             }
             else
             {
-                // A bump is silent; a step, push or turn plays SE00, SE01 or SE02.
+                // Jack turns to the input even when the step is refused. A bump is silent; a step, push or turn
+                // plays SE00, SE01 or SE02.
                 var me = _board.Active;
-                var result = _board.Step(_camera.DirectionFor(screen));
+                var direction = _camera.DirectionFor(screen);
+                _facings[_board.ActiveIndex] = direction;
+                var result = _board.Step(direction);
                 if (result != StepResult.Refused)
                 {
                     _animation = new MoveAnimation(_board.LastMove!, (me.X, me.Y));
@@ -230,8 +243,30 @@ public sealed class PuzzleBoyGame : Game
         else if (Pressed(keys, Keys.R))
         {
             _board.Retry();
+            _facings = new Direction?[_board.Characters.Count];
+            _stageTicks = 0;
             _lock = StartLock;
         }
+    }
+
+    /// <summary>
+    /// The characters on the board, posed for this tick. Before a stage's first input the original leaves Jack at its
+    /// starting rotation, facing grid -y toward the default camera; the idle restarts with the stage.
+    /// </summary>
+    private List<CharacterModel> PosedModels()
+    {
+        var posed = new List<CharacterModel>();
+        for (var i = 0; i < _models.Length; i++)
+        {
+            if (_board.Characters[i].Visible || _animation?.Move.Mover == i)
+            {
+                var (x, y) = MoveAnimation.Where(_board, _animation, i);
+                _models[i].Pose(_stageTicks, x, y, _facings[i] is { } facing ? 90 * (int)facing : 180);
+                posed.Add(_models[i]);
+            }
+        }
+
+        return posed;
     }
 
     private bool Pressed(KeyboardState keys, Keys key) => keys.IsKeyDown(key) && _previousKeys.IsKeyUp(key);
