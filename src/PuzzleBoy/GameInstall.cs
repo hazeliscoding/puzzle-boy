@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Text.RegularExpressions;
+using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using Fmod5Sharp;
 using Microsoft.Win32;
@@ -89,35 +90,40 @@ public sealed partial class GameInstall
                 .Select(info => manager.GetBaseField(assets, info))
                 .FirstOrDefault(field => field["m_Name"].AsString == name)
                 ?? throw new InvalidDataException($"There's no texture {name} in {bundle}.");
-
-            // Large textures keep their pixels in the bundle's .resS entry; small ones inline.
-            var stream = texture["m_StreamData"];
-            var data = stream["size"].AsUInt > 0
-                ? ReadEntry(bundleFile, stream["path"].AsString, stream["offset"].AsULong, stream["size"].AsUInt)
-                : texture["image data"].AsByteArray;
-
-            var (width, height, format) = (texture["m_Width"].AsInt, texture["m_Height"].AsInt, texture["m_TextureFormat"].AsInt);
-            var levels = new List<byte[]>();
-            var at = 0;
-            for (var level = 0; level < texture["m_MipCount"].AsInt; level++)
-            {
-                var (w, h) = (Math.Max(1, width >> level), Math.Max(1, height >> level));
-                var (pixels, size) = format switch
-                {
-                    10 => (TextureDecoder.Dxt1(data.AsSpan(at), w, h), TextureDecoder.Dxt1Size(w, h)),
-                    3 => (TextureDecoder.Rgb24(data.AsSpan(at), w, h), w * h * 3),
-                    _ => throw new InvalidDataException($"Texture {name} in {bundle} has format {format}, which the port doesn't read."),
-                };
-                levels.Add(pixels);
-                at += size;
-            }
-
-            return new TextureData(width, height, levels);
+            return DecodeTexture(bundleFile, texture, bundle);
         }
         finally
         {
             manager.UnloadAll();
         }
+    }
+
+    /// <summary>Decodes a Texture2D's every mip level; see <see cref="ReadTexture"/>.</summary>
+    private static TextureData DecodeTexture(BundleFileInstance bundleFile, AssetTypeValueField texture, string bundle)
+    {
+        // Large textures keep their pixels in the bundle's .resS entry; small ones inline.
+        var stream = texture["m_StreamData"];
+        var data = stream["size"].AsUInt > 0
+            ? ReadEntry(bundleFile, stream["path"].AsString, stream["offset"].AsULong, stream["size"].AsUInt)
+            : texture["image data"].AsByteArray;
+
+        var (width, height, format) = (texture["m_Width"].AsInt, texture["m_Height"].AsInt, texture["m_TextureFormat"].AsInt);
+        var levels = new List<byte[]>();
+        var at = 0;
+        for (var level = 0; level < texture["m_MipCount"].AsInt; level++)
+        {
+            var (w, h) = (Math.Max(1, width >> level), Math.Max(1, height >> level));
+            var (pixels, size) = format switch
+            {
+                10 => (TextureDecoder.Dxt1(data.AsSpan(at), w, h), TextureDecoder.Dxt1Size(w, h)),
+                3 => (TextureDecoder.Rgb24(data.AsSpan(at), w, h), w * h * 3),
+                _ => throw new InvalidDataException($"Texture {texture["m_Name"].AsString} in {bundle} has format {format}, which the port doesn't read."),
+            };
+            levels.Add(pixels);
+            at += size;
+        }
+
+        return new TextureData(width, height, levels);
     }
 
     /// <summary>
