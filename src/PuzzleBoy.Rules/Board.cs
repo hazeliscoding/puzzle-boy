@@ -16,6 +16,19 @@ public enum Direction
     MinusX,
 }
 
+/// <summary>Helpers for <see cref="Direction"/>.</summary>
+public static class Directions
+{
+    /// <summary>The (x, y) step one cell in <paramref name="direction"/>.</summary>
+    public static (int X, int Y) Offset(this Direction direction) => direction switch
+    {
+        Direction.PlusY => (0, 1),
+        Direction.PlusX => (1, 0),
+        Direction.MinusY => (0, -1),
+        _ => (-1, 0),
+    };
+}
+
 /// <summary>What a step did.</summary>
 public enum StepResult
 {
@@ -113,7 +126,7 @@ public sealed class Board
             return StepResult.Refused;
         }
 
-        var (dx, dy) = Offset(direction);
+        var (dx, dy) = direction.Offset();
         var (x, y) = (me.X + dx, me.Y + dy);
         if (!InGrid(x, y) || OtherCharacterAt(x, y) || (this[x, y] & Cell.HoleFlag) != 0)
         {
@@ -177,7 +190,7 @@ public sealed class Board
 
     private StepResult Push(Direction direction, int group)
     {
-        var (dx, dy) = Offset(direction);
+        var (dx, dy) = direction.Offset();
         var parts = PartsOf(group);
         foreach (var (x, y) in parts)
         {
@@ -227,7 +240,7 @@ public sealed class Board
             _ => me.Y < center.Y ? -1 : 1,
         };
 
-        var (dx, dy) = Offset(direction);
+        var (dx, dy) = direction.Offset();
         var steps = IsPartAt(me.X + dy, me.Y + dx, group) || IsPartAt(me.X - dy, me.Y - dx, group) ? 2 : 1;
         for (var i = 0; i <= steps; i++)
         {
@@ -354,14 +367,6 @@ public sealed class Board
 
         return false;
     }
-
-    private static (int X, int Y) Offset(Direction direction) => direction switch
-    {
-        Direction.PlusY => (0, 1),
-        Direction.PlusX => (1, 0),
-        Direction.MinusY => (0, -1),
-        _ => (-1, 0),
-    };
 
     private static bool InGrid(int x, int y) => x is >= 0 and < Stage.Width && y is >= 0 and < Stage.Height;
 

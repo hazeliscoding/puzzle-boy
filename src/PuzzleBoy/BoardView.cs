@@ -197,7 +197,7 @@ internal sealed class BoardView : IDisposable
         Matrix transform;
         if (move.Result == StepResult.Pushed)
         {
-            var (dx, dy) = Offset(move.Direction);
+            var (dx, dy) = move.Direction.Offset();
             transform = Matrix.CreateTranslation(-dx * left, -animation.Sink, dy * left);
         }
         else
@@ -346,5 +346,4 @@ internal sealed class BoardView : IDisposable
     // +y, +x, -y, -x: the original's direction order.
     private static readonly (int X, int Y)[] Sides = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
-    private static (int X, int Y) Offset(Direction direction) => Sides[(int)direction];
 }
