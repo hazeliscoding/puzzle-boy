@@ -33,15 +33,38 @@ public sealed class TimingTests
     }
 
     [Fact]
-    public void The_angle_change_takes_3_ticks()
+    public void After_an_angle_change_L1_and_R1_wait_3_ticks()
     {
         var camera = new ViewCamera();
 
         Assert.True(camera.ToggleAngle());
         camera.Tick();
-        Assert.True(camera.IsBusy);
+        Assert.False(camera.TurnRight());
         camera.Tick();
-        Assert.False(camera.IsBusy);
+        Assert.False(camera.TurnRight());
+        camera.Tick();
+        Assert.True(camera.TurnRight());
+    }
+
+    [Fact]
+    public void A_turn_in_the_overhead_view_takes_12_ticks_and_still_ends_a_quarter_turn_away()
+    {
+        var camera = new ViewCamera();
+        camera.ToggleAngle();
+        for (var tick = 0; tick < 3; tick++)
+        {
+            camera.Tick();
+        }
+
+        Assert.True(camera.TurnRight());
+        for (var tick = 1; tick < 12; tick++)
+        {
+            Assert.True(camera.IsTurning);
+            camera.Tick();
+        }
+
+        Assert.False(camera.IsTurning);
+        Assert.Equal(90, camera.Yaw);
     }
 
     [Theory]

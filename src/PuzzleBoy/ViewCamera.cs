@@ -9,9 +9,15 @@ namespace PuzzleBoy;
 /// </summary>
 internal sealed class ViewCamera
 {
-    private const float TurnStep = 10f;
-    private const int TurnTicks = 9;
-    private const int AngleTicks = 3;
+    // A turn steps 10° a tick for 9 ticks in the normal view and 0.14 rad (8.19°) for 12 in the overhead view,
+    // snapping to the exact quarter turn on its last tick.
+    private const float NormalTurnStep = 10f;
+    private const int NormalTurnTicks = 9;
+    private const float OverheadTurnStep = 8.19f;
+    private const int OverheadTurnTicks = 12;
+
+    // The angle change steps the pitch on the press tick and the next 2, and L1/R1 wait one tick more.
+    private const int AngleSteps = 3;
 
     // The original's offsets from the character: (0, 400, -240) in the normal view and (0, 450, 0) overhead.
     private const float NormalBack = 6f;
@@ -19,10 +25,12 @@ internal sealed class ViewCamera
     private const float OverheadHeight = 11.25f;
 
     private float _yaw;
-    private int _turnTicksLeft;
+    private float _targetYaw;
     private float _turnStep;
+    private int _turnTicksLeft;
+    private Vector3? _orbit;
     private bool _overhead;
-    private int _angle = AngleTicks;
+    private int _angle = AngleSteps + 1;
     private int _quakeTicks;
     private float _quakeX;
     private float _quakeY;
@@ -30,8 +38,14 @@ internal sealed class ViewCamera
     /// <summary>R1 presses minus L1 presses, mod 4. It turns the keys and the view together.</summary>
     public int Mode { get; private set; }
 
+    /// <summary>True while an L1/R1 turn runs; the original refuses its □ menu until it ends.</summary>
+    public bool IsTurning => _turnTicksLeft > 0;
+
     /// <summary>True while a turn or an angle change runs; the original ignores L1, R1 and ○ until it ends.</summary>
-    public bool IsBusy => _turnTicksLeft > 0 || _angle is > 0 and < AngleTicks;
+    public bool IsBusy => IsTurning || _angle <= AngleSteps;
+
+    /// <summary>The view's yaw in degrees: 0 looks toward grid +y, and R1 adds 90 over a turn.</summary>
+    public float Yaw => _yaw;
 
     /// <summary>
     /// The grid direction for a screen direction: 0 up, 1 right, 2 down, 3 left. Up is always away from the camera,
@@ -39,10 +53,7 @@ internal sealed class ViewCamera
     /// </summary>
     public Direction DirectionFor(int screen) => (Direction)((screen - Mode + 4) % 4);
 
-    /// <summary>The view's yaw in degrees: 0 looks toward grid +y, and R1 adds 90 over a turn.</summary>
-    public float Yaw => _yaw;
-
-    /// <summary>L1: turns the view a quarter turn, orbiting the camera 10° a tick for 9 ticks. False while busy.</summary>
+    /// <summary>L1: turns the view a quarter turn, over 9 ticks in the normal view or 12 overhead. False while busy.</summary>
     public bool TurnLeft() => Turn(-1);
 
     /// <summary>R1: the opposite of <see cref="TurnLeft"/>.</summary>
@@ -76,11 +87,11 @@ internal sealed class ViewCamera
     {
         if (_turnTicksLeft > 0)
         {
-            _yaw += _turnStep;
             _turnTicksLeft--;
+            _yaw = _turnTicksLeft == 0 ? _targetYaw : _yaw + _turnStep;
         }
 
-        if (_angle < AngleTicks)
+        if (_angle <= AngleSteps)
         {
             _angle++;
         }
@@ -96,8 +107,20 @@ internal sealed class ViewCamera
     /// <summary>The view matrix for a camera following <paramref name="pivot"/>, the point the original orbits.</summary>
     public Matrix View(Vector3 pivot)
     {
+        // A turn in the normal view orbits the point where it started and doesn't follow the character; the camera
+        // catches up when it ends. The overhead view keeps following.
+        if (IsTurning && !_overhead)
+        {
+            _orbit ??= pivot;
+            pivot = _orbit.Value;
+        }
+        else
+        {
+            _orbit = null;
+        }
+
         // How far the view has gone toward overhead: pitch steps 60, 70, 80, 90 and the position moves in thirds.
-        var toward = _angle / (float)AngleTicks;
+        var toward = Math.Min(_angle, AngleSteps) / (float)AngleSteps;
         var overhead = _overhead ? toward : 1 - toward;
         var pitch = MathHelper.ToRadians(60 + (30 * overhead));
         var yaw = MathHelper.ToRadians(_yaw);
@@ -126,11 +149,12 @@ internal sealed class ViewCamera
         }
 
         // R1 orbits the camera counterclockwise seen from above (from the south side to the east), L1 the other way.
-        // The first of the 9 steps shows on the press tick.
+        // The first step shows on the press tick.
         Mode = (Mode + sense + 4) % 4;
-        _turnStep = sense * TurnStep;
+        _targetYaw = _yaw + (sense * 90);
+        _turnStep = sense * (_overhead ? OverheadTurnStep : NormalTurnStep);
         _yaw += _turnStep;
-        _turnTicksLeft = TurnTicks - 1;
+        _turnTicksLeft = (_overhead ? OverheadTurnTicks : NormalTurnTicks) - 1;
         return true;
     }
 }
