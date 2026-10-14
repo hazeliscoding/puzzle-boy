@@ -33,13 +33,10 @@ public sealed class PuzzleBoyGame : Game
         (Keys.Right, 1), (Keys.D, 1),
     ];
 
-    private readonly IReadOnlyList<(int File, Stage Stage)> _stages;
-    private readonly TextureData _atlas;
-    private readonly TextureData _background;
-    private readonly IReadOnlyDictionary<string, SoundData> _soundData;
-    private readonly CharacterData _character;
+    private readonly GameAssets _assets;
     private readonly ViewCamera _camera = new();
     private BoardView _view = null!;
+    private Hud _hud = null!;
     private Sounds _sounds = null!;
     private KeyboardState _previousKeys;
     private Board _board = null!;
@@ -52,20 +49,14 @@ public sealed class PuzzleBoyGame : Game
     private int _clearedFor;
     private int _ticks;
     private int _stageTicks;
+    private int _undoTicks;
+    private int _scrollTicks;
 
-    /// <summary>Opens a window on the first of <paramref name="stages"/>.</summary>
-    /// <param name="stages">The stages to play in order, each with its file number. Must not be empty.</param>
-    /// <param name="atlas">The board atlas, <c>sample1</c> from the <c>pazzleboy</c> bundle.</param>
-    /// <param name="background">The backdrop, <c>BG_pzl</c> from the <c>common</c> bundle.</param>
-    /// <param name="sounds">The sound effects and music from the <c>pazzleboy</c> bundle, by clip name.</param>
-    /// <param name="character">Jack-o'-Lantern, from the <c>dvl0x150</c> bundle.</param>
-    internal PuzzleBoyGame(IReadOnlyList<(int File, Stage Stage)> stages, TextureData atlas, TextureData background, IReadOnlyDictionary<string, SoundData> sounds, CharacterData character)
+    /// <summary>Opens a window on the first stage of <paramref name="assets"/>.</summary>
+    /// <param name="assets">Everything read from the player's install. Its stage list must not be empty.</param>
+    internal PuzzleBoyGame(GameAssets assets)
     {
-        _stages = stages;
-        _atlas = atlas;
-        _background = background;
-        _soundData = sounds;
-        _character = character;
+        _assets = assets;
 
         // The manager registers itself as a game service, which keeps it alive.
         _ = new GraphicsDeviceManager(this) { PreferredBackBufferWidth = 1280, PreferredBackBufferHeight = 720 };
@@ -80,8 +71,9 @@ public sealed class PuzzleBoyGame : Game
     /// <inheritdoc />
     protected override void LoadContent()
     {
-        _view = new BoardView(GraphicsDevice, _atlas, _background, _character);
-        _sounds = new Sounds(_soundData);
+        _view = new BoardView(GraphicsDevice, _assets.Atlas, _assets.Background, _assets.Character);
+        _hud = new Hud(GraphicsDevice, _assets.Ui);
+        _sounds = new Sounds(_assets.Sounds);
         _sounds.StartMusic();
     }
 
@@ -89,6 +81,7 @@ public sealed class PuzzleBoyGame : Game
     protected override void UnloadContent()
     {
         _view.Dispose();
+        _hud.Dispose();
         _sounds.Dispose();
     }
 
@@ -103,6 +96,8 @@ public sealed class PuzzleBoyGame : Game
 
         _ticks++;
         _stageTicks++;
+        _scrollTicks++;
+        _undoTicks = Math.Max(0, _undoTicks - 1);
         _camera.Tick();
         _animation?.Tick();
         if (_animation is { FallStarts: true })
@@ -127,7 +122,7 @@ public sealed class PuzzleBoyGame : Game
 
         if (_board.IsCleared)
         {
-            if (++_clearedFor >= ClearTicks && _current + 1 < _stages.Count)
+            if (++_clearedFor >= ClearTicks && _current + 1 < _assets.Stages.Count)
             {
                 Load(_current + 1);
             }
@@ -145,7 +140,7 @@ public sealed class PuzzleBoyGame : Game
         // Developer shortcut until the menu exists: skip between stages.
         if (Pressed(keys, Keys.PageDown) || Pressed(keys, Keys.PageUp))
         {
-            Load((_current + (Pressed(keys, Keys.PageDown) ? 1 : _stages.Count - 1)) % _stages.Count);
+            Load((_current + (Pressed(keys, Keys.PageDown) ? 1 : _assets.Stages.Count - 1)) % _assets.Stages.Count);
         }
 
         UpdateTitle();
@@ -161,6 +156,10 @@ public sealed class PuzzleBoyGame : Game
         var view = _camera.View(new Vector3(px, PivotHeight, -py));
         var projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(60), GraphicsDevice.Viewport.AspectRatio, 0.05f, 30f);
         _view.Draw(_board, _animation, view, projection, _ticks, PosedModels(), _camera.Yaw);
+
+        // COMPLETE! shows from the clear's first tick, the one after the last move ends, for 30 ticks.
+        var clear = _board.IsCleared && _clearedFor is >= 4 and < 34;
+        _hud.Draw(new HudState(_current + 1, clear, _undoTicks > 0, ScrollArrows(), _scrollTicks));
         base.Draw(gameTime);
     }
 
@@ -168,8 +167,9 @@ public sealed class PuzzleBoyGame : Game
     {
         // The camera's turn and angle carry over between stages, as in the original; scroll mode doesn't.
         _current = index;
-        _board = new Board(_stages[index].Stage);
-        _models = [.. _board.Characters.Select(_ => new CharacterModel(_character))];
+        _board = new Board(_assets.Stages[index].Stage);
+        _undoTicks = 0;
+        _models = [.. _board.Characters.Select(_ => new CharacterModel(_assets.Character))];
         _facings = new Direction?[_board.Characters.Count];
         _stageTicks = 0;
         _animation = null;
@@ -185,6 +185,7 @@ public sealed class PuzzleBoyGame : Game
         if (Pressed(keys, Keys.Tab))
         {
             _scroll = _scroll is null ? (_board.Active.X, _board.Active.Y) : null;
+            _scrollTicks = 0;
             _sounds.Play(8);
         }
 
@@ -236,9 +237,10 @@ public sealed class PuzzleBoyGame : Game
             return;
         }
 
-        if (Pressed(keys, Keys.Z) || Pressed(keys, Keys.Back))
+        if ((Pressed(keys, Keys.Z) || Pressed(keys, Keys.Back)) && _board.Undo())
         {
-            _board.Undo();
+            // UNDO shows for 30 ticks from the tick the board reverts.
+            _undoTicks = 30;
         }
         else if (Pressed(keys, Keys.R))
         {
@@ -247,6 +249,27 @@ public sealed class PuzzleBoyGame : Game
             _stageTicks = 0;
             _lock = StartLock;
         }
+    }
+
+    /// <summary>The scroll arrows to show: one per screen direction the cursor can still move, as a bit mask.</summary>
+    private int ScrollArrows()
+    {
+        if (_scroll is not { } cursor)
+        {
+            return 0;
+        }
+
+        var mask = 0;
+        for (var screen = 0; screen < 4; screen++)
+        {
+            var (dx, dy) = _camera.DirectionFor(screen).Offset();
+            if (cursor.X + dx is >= 0 and < Stage.Width && cursor.Y + dy is >= 0 and < Stage.Height)
+            {
+                mask |= 1 << screen;
+            }
+        }
+
+        return mask;
     }
 
     /// <summary>
@@ -273,7 +296,7 @@ public sealed class PuzzleBoyGame : Game
 
     private void UpdateTitle()
     {
-        var status = _board.IsCleared ? (_current + 1 < _stages.Count ? " - cleared" : " - all stages cleared") : "";
-        Window.Title = $"Puzzle Boy - stage {_current + 1} of {_stages.Count} (file {_stages[_current].File:D2}){status}";
+        var status = _board.IsCleared ? (_current + 1 < _assets.Stages.Count ? " - cleared" : " - all stages cleared") : "";
+        Window.Title = $"Puzzle Boy - stage {_current + 1} of {_assets.Stages.Count} (file {_assets.Stages[_current].File:D2}){status}";
     }
 }
