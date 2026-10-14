@@ -3,7 +3,14 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <RootNamespace>PuzzleBoy</RootNamespace>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <!-- MonoGame's window looks these up by name; they're the brand's mark (docs/brand), not game data. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Icon.ico" LogicalName="Icon.ico" />
+    <EmbeddedResource Include="Icon.bmp" LogicalName="Icon.bmp" />
+  </ItemGroup>
 
   <!-- No MonoGame content pipeline: every asset is read from the player's install at runtime. -->
   <ItemGroup>
