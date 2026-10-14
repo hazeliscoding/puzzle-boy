@@ -30,6 +30,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **Undo keeps a full copy of the board** for each push or turn, at most 30. The original stores only what changed, and the results are the same.
 - **Rules tests draw their stages as text.** Columns are x and rows are y; the helper turns each drawing into real stage-file bytes, so every test also goes through the parser.
 - **Play ends after stage 20.** Every video and guide returns to the arcade after stage 20, and none reaches file 00, which the code lists for levels 2 and 3. File 00 joins the unused stages in Later.
+- **Brand: Pixel Jack.** A 16×16 pixel-art pumpkin in a crooked witch's hat, inspired by SMT's Pyro Jack and drawn from scratch: no Atlus logos or art. The project is for modders and reverse engineers, not a product. The name stays Puzzle Boy, with the trademark notice in the README. The wordmark comes from Silkscreen Bold (SIL OFL 1.1), converted to paths. The palette is pumpkin `#F07F2A`/`#C9581C`, ember `#FFC94A`, hat `#2A2148` (`#4A3B91` on dark), band `#7A4FD0` (`#B497FF` on dark), ink `#1A1426`, cream `#F4EEE2` and night `#15102A`. Files are in `docs/brand/`. The window and executable icons use the dark palette, whose lighter hat reads on both light and dark title bars.
 - **M2 closes with the in-game checks moved to M3.** The owner's save isn't at Puzzle Boy yet. M3 answers them from the game's code where it reaches them, since the camera and input code is in `.text`, and labels anything inferred.
 
 ## M0 findings (2026.10.14)
@@ -86,10 +87,6 @@ Read from the decompiled game code through REA. Seven readers each covered one a
 - The character-collision check is called with x and y swapped, so another character blocks the mirrored cell. Only multi-character stages could show it, and the original plays none.
 - The swivel check has no grid-edge test, and no shipped swivel touches the edge.
 - Stage 36, the sixth stage played, has a swivel arm resting on a hole (`0xA802` at (8, 10)). The character can't push that arm, the swivel still turns from its other arms, and the hole stays open.
-
-## Open decisions
-
-To settle before M3: the brand. It must be an original mark with no Atlus logos or art, and the README gets its header once the brand exists.
 
 ## M0: Research the rules (done 2026.10.14)
 

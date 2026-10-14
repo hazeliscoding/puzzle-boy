@@ -1,4 +1,9 @@
-# Puzzle Boy
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.svg">
+    <img alt="Puzzle Boy" src="docs/brand/lockup.svg" height="40">
+  </picture>
+</h1>
 
 **The Puzzle Boy minigame from *Shin Megami Tensei III: Nocturne*, as a standalone game.**
 
