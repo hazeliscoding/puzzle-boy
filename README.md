@@ -7,6 +7,11 @@
 
 **The Puzzle Boy minigame from *Shin Megami Tensei III: Nocturne*, as a standalone game.**
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/fb27b01d-3f4a-418e-ab2f-b81c402ce16c" alt="Jack-o'-Lantern turns the view, pushes blocks and clears stage 2" width="800">
+  <br><em>Rendered by the port from a local copy of the game.</em>
+</p>
+
 In Nocturne, Puzzle Boy sits deep inside a long RPG. You guide Jack-o'-Lantern through a maze by pushing blocks, turning swivel blocks and filling holes, while the Manikin Kid taunts you. It is a 3D take on Atlus's Game Boy puzzler of the same name, released in the West as Kwirk.
 
 This project rebuilds the minigame so it runs on its own on Windows, macOS and Linux. It reads the stages, text and sounds from your own copy of *Shin Megami Tensei III Nocturne HD Remaster*.
