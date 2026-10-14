@@ -11,11 +11,20 @@ In Nocturne, Puzzle Boy sits deep inside a long RPG. You guide Jack-o'-Lantern t
 
 This project rebuilds the minigame so it runs on its own on Windows, macOS and Linux. It reads the stages, text and sounds from your own copy of *Shin Megami Tensei III Nocturne HD Remaster*.
 
-> **Status:** early development. The original's rules are decoded and implemented, and all 20 stages can be played from your install with the original's board look, camera, timing, sound, HUD, dialogue, menu and an animated Jack-o'-Lantern. Solutions recorded in the original clear every stage in the port. A macOS check of the release builds comes next. See [ROADMAP.md](ROADMAP.md).
+> **Status:** early development. The original's rules are decoded and implemented, and all 20 stages can be played from your install with the original's board look, camera, timing, sound, HUD, dialogue, menu and an animated Jack-o'-Lantern. Solutions recorded in the original clear every stage in the port. See [ROADMAP.md](ROADMAP.md).
 
 ## Bring your own copy
 
 This repository contains no Atlus code or data: no stages, text, audio, textures, models or decompiled code. The game finds your Steam install and reads them from there. Without the original game, it has nothing to show.
+
+## Play
+
+1. Download the archive for your system from [Releases](https://github.com/hazeliscoding/puzzle-boy/releases) and unpack it.
+2. Run `PuzzleBoy` (`PuzzleBoy.exe` on Windows). It looks for the game in your Steam libraries. If no window opens, it didn't find the game: run it from a terminal with the folder that holds `smt3hd.exe`, for example `PuzzleBoy "D:\Games\smt3hd"`.
+
+Arrow keys or WASD move, Q and E turn the view, V switches to overhead, Tab scrolls, F opens the menu (undo, restart, help, quit), Enter or Space confirms, Backspace cancels, and Escape quits.
+
+The builds aren't signed, so Windows SmartScreen and macOS Gatekeeper may warn before the first start. On macOS, `xattr -dr com.apple.quarantine` on the unpacked folder lets it run. Nocturne HD has no Mac version, so a Mac needs a copy of the game folder from a PC. Nobody has played the macOS builds yet, so reports are welcome.
 
 ## How it is built
 
