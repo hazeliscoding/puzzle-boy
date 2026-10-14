@@ -209,6 +209,7 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 - [x] Release builds for Windows, macOS and Linux.
   - `release.yml` builds self-contained archives for win-x64, linux-x64, osx-arm64 and osx-x64 from Linux, and a `v*` tag publishes them. Before publishing, each build must start on its own system in CI and reach the "no game here" message: Windows, Linux and Apple Silicon macOS pass ([run 38579842875](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38579842875)).
   - Played stage 1 from the owner's install: the Windows build, and the Linux build under WSL (WSLg, Mesa llvmpipe). macOS has no tester yet, and its builds are unsigned.
+  - [v0.1.0](https://github.com/hazeliscoding/puzzle-boy/releases/tag/v0.1.0) published all four archives after the start checks passed on all three systems ([run 38610613537](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38610613537)).
 
 **Done when** the release builds start on all three systems and play stage 1 from the player's install.
 
