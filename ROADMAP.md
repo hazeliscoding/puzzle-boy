@@ -32,6 +32,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **Play ends after stage 20.** Every video and guide returns to the arcade after stage 20, and none reaches file 00, which the code lists for levels 2 and 3. File 00 joins the unused stages in Later.
 - **Brand: Pixel Jack.** A 16×16 pixel-art pumpkin in a crooked witch's hat, inspired by SMT's Pyro Jack and drawn from scratch: no Atlus logos or art. The project is for modders and reverse engineers, not a product. The name stays Puzzle Boy, with the trademark notice in the README. The wordmark comes from Silkscreen Bold (SIL OFL 1.1), converted to paths. The palette is pumpkin `#F07F2A`/`#C9581C`, ember `#FFC94A`, hat `#2A2148` (`#4A3B91` on dark), band `#7A4FD0` (`#B497FF` on dark), ink `#1A1426`, cream `#F4EEE2` and night `#15102A`. Files are in `docs/brand/`. The window and executable icons use the dark palette, whose lighter hat reads on both light and dark title bars.
 - **M2 closes with the in-game checks moved to M3.** The owner's save isn't at Puzzle Boy yet. M3 answers them from the game's code where it reaches them, since the camera and input code is in `.text`, and labels anything inferred.
+- **Menu keys and the UI's open questions.** The original's keyboard keys for confirm and cancel are in protected code, so the port picks them: F opens the □ menu (inferred from the original's key tables), Enter or Space confirms, Backspace cancels, and Escape still quits at once. Text uses the face edge fitted to the footage (+0.035) rather than the material's exact value. The port has no stage fade and no mouse in the menu (re/m3-ui.md, section 10).
 
 ## M0 findings (2026.10.14)
 
@@ -201,7 +202,9 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
   - Done: the board's look: the atlas textures, glass walls, outlines, the goal and the backdrop, all read from the player's install.
   - Done: the sound effects (step, push, turn, fall, view change and goal) and the looping music, with the original's triggers. The menu sounds come with the menu.
   - Done: Jack-o'-Lantern from the player's install: his skinned model, idle animation, facing, toon shading, shadow and lantern glow.
-- [ ] Menus: undo, retry, help and quit, matching the original's options.
+  - Done: the HUD (stage counter, COMPLETE!, UNDO, the scroll arrows and the controls bar) and the Manikin Kid's talk before stages 1, 6, 11, 16 and 20, drawn with the game's own font and sheets.
+- [x] Menus: undo, retry, help and quit, matching the original's options.
+  - The □ menu, help page and quit question replace the Z, R and Backspace shortcuts, with SE04–07. The menu matches the HD footage at 561.75 s. Help and the choice box come from the prefab files and were never seen in play.
 - [ ] Release builds for Windows, macOS and Linux.
   - `release.yml` builds self-contained archives for win-x64, linux-x64, osx-arm64 and osx-x64 from Linux, and a `v*` tag publishes them. Before publishing, each build must start on its own system in CI and reach the "no game here" message: Windows, Linux and Apple Silicon macOS pass ([run 38579842875](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38579842875)).
   - Played stage 1 from the owner's install: the Windows build, and the Linux build under WSL (WSLg, Mesa llvmpipe). macOS has no tester yet, and its builds are unsigned.
