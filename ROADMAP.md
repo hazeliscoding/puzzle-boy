@@ -145,6 +145,8 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 - [ ] Camera, Jack-o'-Lantern, stage dialogue, music and sound effects.
 - [ ] Menus: undo, retry, help and quit, matching the original's options.
 - [ ] Release builds for Windows, macOS and Linux.
+  - `release.yml` builds self-contained archives for win-x64, linux-x64, osx-arm64 and osx-x64 from Linux, and a `v*` tag publishes them. Before publishing, each build must start on its own system in CI and reach the "no game here" message: Windows, Linux and Apple Silicon macOS pass ([run 38579842875](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38579842875)).
+  - Played stage 1 from the owner's install: the Windows build, and the Linux build under WSL (WSLg, Mesa llvmpipe). macOS has no tester yet, and its builds are unsigned.
 
 **Done when** the release builds start on all three systems and play stage 1 from the player's install.
 
@@ -152,6 +154,7 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 - A stage editor. The original ships a developer editor (`pbEdit`).
 - Custom stage packs.
+- An Android build. MonoGame targets Android, and the rules library carries over as is. A phone has no Steam install, so the player copies the few bundles Puzzle Boy reads from their PC install (about 85 MB, most of it `common`) and picks them in the app. Needs touch controls: swipe to move, buttons to turn the view.
 - The 30 stage files the original never plays, file 00 included, as bonus stages. They include all seven multi-character stages (05, 09, 18, 27, 43, 45, 47), so this needs a decision on the swapped collision check first.
 
 ## Not planned
