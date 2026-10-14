@@ -16,27 +16,83 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
   - an int32 character count (1–4) and 4 enable bytes;
   - four int16 x,y start positions, then an int16 x,y goal;
   - a 20×20 grid of little-endian uint16 cells: `0x0000` floor, `0x2000` wall, `0x0800` hole, `0x60nn` a cell of block group `nn`.
-  - Swivel blocks use `0x80nn` for the center and `0xA0nn` for the arms. That reading is inferred from the layouts and still needs the code to confirm it.
+  - Swivel blocks use `0x80nn` for the center and `0xA0nn` for the arms. The code confirms this; see the M0 findings.
   - The bundle groups stages 00–29 under `pb1` and 30–49 under `pb2`.
-  - Six files (30, 33, 35, 41, 44, 46) shipped with their `0x0A` bytes rewritten as `0D 0A`. Undoing that gives exactly 828 bytes and a sensible stage. The port's parser undoes it for any file longer than 828 bytes. Whether the original does the same is still an M0 question.
+  - Six files (30, 33, 35, 41, 44, 46) shipped with their `0x0A` bytes rewritten as `0D 0A`. Undoing that gives exactly 828 bytes and a sensible stage. The port's parser undoes it for any file longer than 828 bytes. The original never loads these files.
   - The enable bytes, not the count, pick the characters: stage 08 uses only slot 1, and stage 45 uses slots 2 and 3. Every start and goal sits on floor.
+
+## M0 findings (2026.10.14)
+
+Read from the decompiled game code through REA. Seven readers each covered one area, and an adversarial reviewer per area re-checked every claim against the pseudocode: 111 claims, 97 confirmed, 10 refuted or corrected, 4 left uncertain. Only the confirmed and corrected claims are recorded here. The IDs are short REA Evidence IDs; the pseudocode and the full results stay in `re/`.
+
+**Cells and coordinates**
+- A cell's bits 13–15 are its type: 0 floor, 1 wall, 3 block, 4 swivel center, 5 swivel arm. Types 6 and 7 act like walls. `0x0800` is the hole flag, and the low 11 bits are the group id. Type 2 only exists at runtime: when a stage loads, the first cell of each block group becomes the group's core. A group is every cell with that id, whether or not the cells touch (`pbGameDraw.makeBlockDataBase` ev_7709df7abef9).
+- File cell `20 × y + x` is cell (x, y), and the start and goal pairs are (x, y). Direction 0 is y + 1, 1 is x + 1, 2 is y − 1 and 3 is x − 1 (`pbGame.game` ev_c6e6a20a255d).
+
+**A step** (`pbGame.hitCheck` ev_18c11f2e61c4)
+- Checked in this order. A character already on the goal does nothing. A destination off the grid, another character or a hole is a bump. Then, by type: floor walks one cell, a block is a push, an arm is a swivel turn, and a swivel center or a wall is a bump.
+- A bump is silent and changes nothing. Plain walking is never recorded for undo.
+
+**Pushing and holes** (`pushCheck` ev_527a76211ad2, `moveBlock` ev_beab8ee211d5, `hallCheck` ev_acbf04db9622)
+- Only the group walked into moves, one cell. Every one of its cells must land on the grid, on floor or on a cell of the same group, with no other character there. A wall, another block or a swivel refuses the push, so a block never pushes another block. Holes and the goal don't refuse a push.
+- The character steps into the cell the block left.
+- After the push, the block falls only if every one of its cells is over a hole. The fall fills those holes with plain floor and the block disappears. Holes the block doesn't fully cover stay holes.
+- A block or arm cell resting on a hole can't be stepped into, so it can't be pushed from that cell, because the hole check comes first.
+
+**Swivels** (`roundCheck` ev_8975615c3ad9, `roundDirCheck` ev_474426a6ef42, `roundBlock` ev_9e719443f24e)
+- Pushing an arm turns the swivel exactly one quarter turn, and the pushed arm ends on the side of the center the push points to.
+- The turn is refused when the character is in line with the center (same row or column), when the character's path holds a hole or a wall, or when any cell of the swivel would move onto, or sweep through, a wall, another group's cell or another character. The sweep cell is center + old offset + new offset.
+- Holes and the goal never block a turn, and an arm can stop over a hole without filling it.
+- The character moves 2 cells when a cell beside it, across the push, belongs to the same swivel, and 1 cell otherwise.
+
+**Characters, goal and clear** (`deleteMoveChar` ev_34d10980d2c4, `changeCharacter` ev_9031f1f64dd0, `ClearProc` ev_a22f645b61d7)
+- The goal is checked where a move ends. A character that arrives while others are still out is hidden, and control passes to the next visible slot in ascending order, wrapping around. There is no manual switch.
+- The last arrival clears the stage: input locks for 31 ticks, the undo history is wiped, and the next stage loads automatically.
+- There is no move counter. The only number on screen is the stage counter.
+
+**Stages and dialogue** (`pbGame` static constructor ev_c1e5d35be978, `GetStageScriptLabel` ev_3d9eedee78a2, `pbInitGame` ev_b52ab1ade7e0, `pbGotoNewStage` ev_ee2048a293c0, `pbInitMain` ev_9981f13362fa)
+- Level 1 plays 20 stage files in this order: 02, 04, 32, 08, 38, 36, 37, 48, 42, 49, 40, 20, 22, 13, 21, 24, 14, 10, 25, 26. Levels 2 and 3 play only file 00. That's 21 distinct files, and a local scan shows each has exactly one character.
+- Dialogue plays before stages 1, 6, 11, 16 and 20 (labels 0–4 of `pbmsg.bf`). A dialogue can end Puzzle Boy instead of starting the stage. That it's the player choosing to quit is inferred, not confirmed.
+- Progress inside a level isn't saved, so every visit starts at stage 1. Clearing a stage unlocks one achievement and clearing the last stage another, and finishing level 1 also sets a main-game event flag.
+
+**Loading** (`pbMenu.pbLoadSystemData` ev_1fdd0ae2a9c0, `pbBackup_t.pCopy` ev_b293c2a41557)
+- The path is `dds3data/pb/mapdata/data/pb1/` for stages below 30 and `pb2/` otherwise, then `pbMapNN.map.bytes`. `pCopy` reads the fixed 828-byte layout with no length check and no CR handling, and the only validation is "zero characters".
+- The six damaged files are in no level table, so the original never loads them. The damage is in the shipped bundle: their TextAssets are 829–834 bytes there.
+
+**Undo and retry** (`pbRecord.pbPushRecord` ev_e52d36ebf3b4, `pbAddRecord_char` ev_a762737382cb, `pbGame.pbPreviousRecord` ev_3dae85334430, `pbMenu.reTry` ev_c3f78d7bff36)
+- Undo keeps a ring of 30 slots, and only pushes and swivel turns are recorded (a push and its fall count as one). A record holds the active character, every character's position and visibility, the moved group's cells, and the hole bits a fall filled.
+- Undo returns to the moment before the last push or turn and discards any walking since. Characters hidden at the goal reappear and filled holes reopen. The 31st action overwrites the oldest slot, so 30 undos are always available. There's no redo.
+- The history is wiped at stage start, on retry and on clear.
+
+**Presentation** (`pbModel.pbInitMyCharacterDraw` ev_dc99c6b3c387, `pbChangeMotion` ev_7385ca4844c3, `pbDraw.drawBlock` ev_913d4de77fec)
+- The character is demon model `0x150` (bundle `dvl0x150`), a Puzzle Boy variant of Jack-o'-Lantern: its materials are demon `0x47`'s hat, eyes and lantern, plus a puzzle shadow. Every slot uses the same model.
+- In HD the walk and push motions are empty, so the model loops its first animation and turns to face each input.
+- The background is `BG_pzl.png` from the `common` bundle. Board textures come from the `sample1.tga` atlas. The goal is an untextured translucent cube spinning 1° per frame, and a cell is 40 world units.
+- Sounds: SE00 step, SE01 push, SE02 turn, SE09 goal, SE04 menu. Music: `JYAKYO02_BGM00`.
+
+**Quirks in the original**
+- The character-collision check is called with x and y swapped, so another character blocks the mirrored cell. Only multi-character stages could show it, and the original plays none.
+- The swivel check has no grid-edge test, and no shipped swivel touches the edge.
+- Stage 36, the sixth stage played, has a swivel arm resting on a hole (`0xA802` at (8, 10)). The character can't push that arm, the swivel still turns from its other arms, and the hole stays open.
 
 ## Open decisions
 
 To settle before M3: the brand. It must be an original mark with no Atlus logos or art, and the README gets its header once the brand exists.
 
-## M0: Research the rules (current)
+## M0: Research the rules (done 2026.10.14)
 
 - [x] Decode the stage format from the asset bundle.
 - [x] Recover every method's name and address from the IL2CPP metadata and the code tables.
-- [ ] Analyze `GameAssembly.dll` with REA and Ghidra, and save a snapshot so later sessions skip the analysis.
-- [ ] Decompile the move rules: `pushCheck`, `hitCheck`, `charHitCheck`, `roundCheck`, `roundDirCheck`, `hallCheck`, `goalHitCheck` and `changeCharacter`.
-- [ ] Find which stages are played, in what order, and how each one picks its dialogue (`pbLevelTable`, `pLevel1` to `pLevel3`, `GetStageScriptLabel`).
-- [ ] Find out how the game loads the six damaged stage files (`pbBackup_t.pCopy`, `pbMenu.load`).
-- [ ] Work out undo and records: what `pbRecord` stores, the 30-move limit, the move counter and `pbPreviousRecord`.
-- [ ] Locate the Jack-o'-Lantern model, its motions (`STAY`, `READY`, `WALK`, `PUSH`) and the background.
+- [x] Analyze `GameAssembly.dll` with REA and Ghidra, and save a snapshot so later sessions skip the analysis.
+- [x] Decompile the move rules: `pushCheck`, `hitCheck`, `charHitCheck`, `roundCheck`, `roundDirCheck`, `hallCheck`, `goalHitCheck` and `changeCharacter`.
+- [x] Find which stages are played, in what order, and how each one picks its dialogue (`pbLevelTable`, `pLevel1` to `pLevel3`, `GetStageScriptLabel`).
+- [x] Find out how the game loads the six damaged stage files (`pbBackup_t.pCopy`, `pbMenu.load`). It doesn't: they're never played.
+- [x] Work out undo and records: what `pbRecord` stores, the 30-move limit, the move counter and `pbPreviousRecord`. There is no move counter.
+- [x] Locate the Jack-o'-Lantern model, its motions (`STAY`, `READY`, `WALK`, `PUSH`) and the background.
 
 **Done when** each question above has an answer backed by REA Evidence or an in-game observation, recorded as a decision here.
+
+**Done:** every question has an answer backed by REA Evidence, recorded under "M0 findings" above. A few details can only be seen in the real game, and they're listed in M2.
 
 ## M1: Placeholder (done 2026.10.13)
 
@@ -53,7 +109,12 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 - [ ] Write each M0 rule as a test on a handmade stage.
 - [ ] Implement movement, pushing, swivel blocks, holes, character switching, the goal, undo and retry.
-- [ ] Load and play every stage the original plays.
+- [ ] Load and play the 21 stages the original plays, in its order: level 1's 20 stages, then file 00 for levels 2 and 3.
+- [ ] Confirm in the real game what the code can't show:
+  - which d-pad button is which direction, and how directions change after the camera turns;
+  - whether holding a direction repeats;
+  - that the first stage is file 02, and that dialogue appears before stages 1, 6, 11, 16 and 20;
+  - that undo after a push and some walking returns to just before the push.
 
 **Done when** the tests pass and, for every stage, a solution found in the original also solves the stage in the port.
 
@@ -69,6 +130,7 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 - A stage editor. The original ships a developer editor (`pbEdit`).
 - Custom stage packs.
+- The 29 stage files the original never plays, as bonus stages. They include all seven multi-character stages (05, 09, 18, 27, 43, 45, 47), so this needs a decision on the swapped collision check first.
 
 ## Not planned
 
@@ -78,4 +140,4 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
 
 ## How we'll know it works
 
-A solution recorded in the original game solves the same stage in the port, with the same move count. A move the original rejects, the port rejects too.
+A solution recorded in the original game solves the same stage in the port. The same moves leave the board in the same state, and a move the original rejects, the port rejects too. The original has no move counter to compare.
