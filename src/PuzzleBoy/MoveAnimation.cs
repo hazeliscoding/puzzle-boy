@@ -31,6 +31,22 @@ internal sealed class MoveAnimation(Move move, (int X, int Y) from)
     /// <summary>True on the tick a fall ends, when the original fills the holes and shakes the camera.</summary>
     public bool FallEnds => Move.Fell && Age == 8;
 
+    /// <summary>True on the tick a fall starts, right after the push: the original plays SE03 then.</summary>
+    public bool FallStarts => Move.Fell && Age == 4;
+
+    /// <summary>The cell the moving character ends on.</summary>
+    public (int X, int Y) Destination
+    {
+        get
+        {
+            var (dx, dy) = Move.Direction.Offset();
+            return (From.X + (dx * Move.Cells), From.Y + (dy * Move.Cells));
+        }
+    }
+
+    /// <summary>True on the last tick of the slide, when the original checks for the goal and plays SE09 on arrival.</summary>
+    public bool ArrivesAt((int X, int Y) goal) => Age == 3 && Destination == goal;
+
     /// <summary>True once the original would read the next input: 4 ticks after a walk, 5 after a push or turn, 9 after a fall.</summary>
     public bool Done => Age >= (Move.Fell ? 9 : Move.Result == StepResult.Walked ? 4 : 5);
 

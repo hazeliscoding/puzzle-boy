@@ -11,6 +11,7 @@ var assets = install.ReadTextAssets("pazzleboy");
 var stages = PlayOrder.Files.Select(file => (file, Stage.Parse(assets[PlayOrder.AssetName(file)]))).ToList();
 var atlas = install.ReadTexture("pazzleboy", "sample1");
 var background = install.ReadTexture("common", "BG_pzl");
+var sounds = install.ReadSounds("pazzleboy");
 
-using var game = new PuzzleBoyGame(stages, atlas, background);
+using var game = new PuzzleBoyGame(stages, atlas, background, sounds);
 game.Run();

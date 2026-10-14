@@ -118,4 +118,44 @@ public sealed class TimingTests
 
         Assert.Equal([0f, 0f, 0f, 0f, 0.25f, 0.5f, 0.75f, 1f, 1f], sinks);
     }
+    [Fact]
+    public void A_fall_starts_on_the_tick_after_the_push_ends()
+    {
+        var board = Ascii.Board("1ao");
+        board.Step(Direction.PlusX);
+        var animation = new MoveAnimation(board.LastMove!, (0, 0));
+        var starts = new List<int>();
+        for (var tick = 0; tick < 9; tick++)
+        {
+            if (animation.FallStarts)
+            {
+                starts.Add(tick);
+            }
+
+            animation.Tick();
+        }
+
+        Assert.Equal([4], starts);
+    }
+
+    [Fact]
+    public void Arriving_at_the_goal_is_signalled_on_the_last_tick_of_the_slide()
+    {
+        var board = Ascii.Board(".1.");
+        board.Step(Direction.PlusX);
+        var animation = new MoveAnimation(board.LastMove!, (1, 0));
+        var arrivals = new List<int>();
+        for (var tick = 0; tick < 4; tick++)
+        {
+            if (animation.ArrivesAt((2, 0)))
+            {
+                arrivals.Add(tick);
+            }
+
+            Assert.False(animation.ArrivesAt((0, 0)));
+            animation.Tick();
+        }
+
+        Assert.Equal([3], arrivals);
+    }
 }

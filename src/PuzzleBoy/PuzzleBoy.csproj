@@ -15,7 +15,9 @@
   <!-- No MonoGame content pipeline: every asset is read from the player's install at runtime. -->
   <ItemGroup>
     <PackageReference Include="AssetsTools.NET" />
+    <PackageReference Include="Fmod5Sharp" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" />
+    <PackageReference Include="NVorbis" />
   </ItemGroup>
 
   <ItemGroup>

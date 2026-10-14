@@ -1,6 +1,9 @@
+using System.Buffers.Binary;
 using System.Text.RegularExpressions;
 using AssetsTools.NET.Extra;
+using Fmod5Sharp;
 using Microsoft.Win32;
+using NVorbis;
 
 namespace PuzzleBoy;
 
@@ -9,6 +12,26 @@ namespace PuzzleBoy;
 /// <param name="Height">The top level's height in pixels.</param>
 /// <param name="Levels">The mip levels, largest first, each half the size of the one before.</param>
 public sealed record TextureData(int Width, int Height, IReadOnlyList<byte[]> Levels);
+
+/// <summary>A sound from the game as 16-bit little-endian PCM, channels interleaved.</summary>
+/// <param name="Pcm">The samples.</param>
+/// <param name="SampleRate">Samples per second per channel.</param>
+/// <param name="Channels">1 or 2.</param>
+public sealed record SoundData(byte[] Pcm, int SampleRate, int Channels)
+{
+    /// <summary>Converts float samples (-1 to 1) to 16-bit PCM, clamping anything louder.</summary>
+    public static byte[] Pcm16(ReadOnlySpan<float> samples)
+    {
+        var pcm = new byte[samples.Length * 2];
+        for (var i = 0; i < samples.Length; i++)
+        {
+            var value = (short)Math.Clamp(MathF.Round(samples[i] * short.MaxValue), short.MinValue, short.MaxValue);
+            BinaryPrimitives.WriteInt16LittleEndian(pcm.AsSpan(2 * i), value);
+        }
+
+        return pcm;
+    }
+}
 
 /// <summary>The player's copy of Nocturne HD Remaster. Every asset the port uses is read from it.</summary>
 public sealed partial class GameInstall
@@ -69,18 +92,9 @@ public sealed partial class GameInstall
 
             // Large textures keep their pixels in the bundle's .resS entry; small ones inline.
             var stream = texture["m_StreamData"];
-            byte[] data;
-            if (stream["size"].AsUInt > 0)
-            {
-                var file = bundleFile.file;
-                file.GetFileRange(file.GetFileIndex(Path.GetFileName(stream["path"].AsString)), out var start, out _);
-                file.DataReader.Position = start + (long)stream["offset"].AsULong;
-                data = file.DataReader.ReadBytes((int)stream["size"].AsUInt);
-            }
-            else
-            {
-                data = texture["image data"].AsByteArray;
-            }
+            var data = stream["size"].AsUInt > 0
+                ? ReadEntry(bundleFile, stream["path"].AsString, stream["offset"].AsULong, stream["size"].AsUInt)
+                : texture["image data"].AsByteArray;
 
             var (width, height, format) = (texture["m_Width"].AsInt, texture["m_Height"].AsInt, texture["m_TextureFormat"].AsInt);
             var levels = new List<byte[]>();
@@ -104,6 +118,56 @@ public sealed partial class GameInstall
         {
             manager.UnloadAll();
         }
+    }
+
+    /// <summary>
+    /// Every AudioClip in one of the game's bundles, by name, decoded to 16-bit PCM. The clips are Vorbis inside
+    /// FMOD sound banks (FSB5). Throws <see cref="InvalidDataException"/> for a clip in another codec.
+    /// </summary>
+    public Dictionary<string, SoundData> ReadSounds(string bundle)
+    {
+        var manager = new AssetsManager();
+        try
+        {
+            var bundleFile = manager.LoadBundleFile(BundlePath(Directory, bundle), true);
+            var assets = manager.LoadAssetsFileFromBundle(bundleFile, 0, false);
+            var sounds = new Dictionary<string, SoundData>();
+            foreach (var clip in assets.file.GetAssetsOfType(AssetClassID.AudioClip).Select(info => manager.GetBaseField(assets, info)))
+            {
+                var name = clip["m_Name"].AsString;
+                var resource = clip["m_Resource"];
+                var bank = FsbLoader.LoadFsbFromByteArray(ReadEntry(bundleFile, resource["m_Source"].AsString, resource["m_Offset"].AsULong, (uint)resource["m_Size"].AsULong));
+                if (!bank.Samples[0].RebuildAsStandardFileFormat(out var ogg, out var extension) || extension != "ogg")
+                {
+                    throw new InvalidDataException($"Sound {name} in {bundle} isn't Vorbis, which the port doesn't read.");
+                }
+
+                using var reader = new VorbisReader(new MemoryStream(ogg!), true);
+                var samples = new float[reader.TotalSamples * reader.Channels];
+                var read = 0;
+                while (read < samples.Length && reader.ReadSamples(samples, read, samples.Length - read) is > 0 and var n)
+                {
+                    read += n;
+                }
+
+                sounds[name] = new SoundData(SoundData.Pcm16(samples.AsSpan(0, read)), reader.SampleRate, reader.Channels);
+            }
+
+            return sounds;
+        }
+        finally
+        {
+            manager.UnloadAll();
+        }
+    }
+
+    /// <summary>Reads <paramref name="size"/> bytes at <paramref name="offset"/> of a bundle entry named by a Unity resource path.</summary>
+    private static byte[] ReadEntry(BundleFileInstance bundle, string path, ulong offset, uint size)
+    {
+        var file = bundle.file;
+        file.GetFileRange(file.GetFileIndex(Path.GetFileName(path)), out var start, out _);
+        file.DataReader.Position = start + (long)offset;
+        return file.DataReader.ReadBytes((int)size);
     }
 
     private static string BundlePath(string directory, string bundle) =>

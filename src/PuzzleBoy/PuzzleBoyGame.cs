@@ -36,8 +36,10 @@ public sealed class PuzzleBoyGame : Game
     private readonly IReadOnlyList<(int File, Stage Stage)> _stages;
     private readonly TextureData _atlas;
     private readonly TextureData _background;
+    private readonly IReadOnlyDictionary<string, SoundData> _soundData;
     private readonly ViewCamera _camera = new();
     private BoardView _view = null!;
+    private Sounds _sounds = null!;
     private KeyboardState _previousKeys;
     private Board _board = null!;
     private MoveAnimation? _animation;
@@ -51,11 +53,13 @@ public sealed class PuzzleBoyGame : Game
     /// <param name="stages">The stages to play in order, each with its file number. Must not be empty.</param>
     /// <param name="atlas">The board atlas, <c>sample1</c> from the <c>pazzleboy</c> bundle.</param>
     /// <param name="background">The backdrop, <c>BG_pzl</c> from the <c>common</c> bundle.</param>
-    public PuzzleBoyGame(IReadOnlyList<(int File, Stage Stage)> stages, TextureData atlas, TextureData background)
+    /// <param name="sounds">The sound effects and music from the <c>pazzleboy</c> bundle, by clip name.</param>
+    public PuzzleBoyGame(IReadOnlyList<(int File, Stage Stage)> stages, TextureData atlas, TextureData background, IReadOnlyDictionary<string, SoundData> sounds)
     {
         _stages = stages;
         _atlas = atlas;
         _background = background;
+        _soundData = sounds;
 
         // The manager registers itself as a game service, which keeps it alive.
         _ = new GraphicsDeviceManager(this) { PreferredBackBufferWidth = 1280, PreferredBackBufferHeight = 720 };
@@ -68,10 +72,19 @@ public sealed class PuzzleBoyGame : Game
     }
 
     /// <inheritdoc />
-    protected override void LoadContent() => _view = new BoardView(GraphicsDevice, _atlas, _background);
+    protected override void LoadContent()
+    {
+        _view = new BoardView(GraphicsDevice, _atlas, _background);
+        _sounds = new Sounds(_soundData);
+        _sounds.StartMusic();
+    }
 
     /// <inheritdoc />
-    protected override void UnloadContent() => _view.Dispose();
+    protected override void UnloadContent()
+    {
+        _view.Dispose();
+        _sounds.Dispose();
+    }
 
     /// <inheritdoc />
     protected override void Update(GameTime gameTime)
@@ -85,9 +98,19 @@ public sealed class PuzzleBoyGame : Game
         _ticks++;
         _camera.Tick();
         _animation?.Tick();
+        if (_animation is { FallStarts: true })
+        {
+            _sounds.Play(3);
+        }
+
         if (_animation is { FallEnds: true })
         {
             _camera.Quake();
+        }
+
+        if (_animation?.ArrivesAt(_board.Goal) == true)
+        {
+            _sounds.Play(9);
         }
 
         if (_animation is { Done: true })
@@ -152,11 +175,12 @@ public sealed class PuzzleBoyGame : Game
         if (Pressed(keys, Keys.Tab))
         {
             _scroll = _scroll is null ? (_board.Active.X, _board.Active.Y) : null;
+            _sounds.Play(8);
         }
 
-        if (Pressed(keys, Keys.V))
+        if (Pressed(keys, Keys.V) && _camera.ToggleAngle())
         {
-            _camera.ToggleAngle();
+            _sounds.Play(8);
         }
 
         foreach (var (key, screen) in Moves)
@@ -169,28 +193,27 @@ public sealed class PuzzleBoyGame : Game
             if (_scroll is { } cursor)
             {
                 // In scroll mode a held direction moves the cursor one cell a tick, within the grid; Jack stays put.
-                var (dx, dy) = Offset(_camera.DirectionFor(screen));
+                var (dx, dy) = _camera.DirectionFor(screen).Offset();
                 _scroll = (Math.Clamp(cursor.X + dx, 0, Stage.Width - 1), Math.Clamp(cursor.Y + dy, 0, Stage.Height - 1));
             }
             else
             {
+                // A bump is silent; a step, push or turn plays SE00, SE01 or SE02.
                 var me = _board.Active;
-                if (_board.Step(_camera.DirectionFor(screen)) != StepResult.Refused)
+                var result = _board.Step(_camera.DirectionFor(screen));
+                if (result != StepResult.Refused)
                 {
                     _animation = new MoveAnimation(_board.LastMove!, (me.X, me.Y));
+                    _sounds.Play(result switch { StepResult.Walked => 0, StepResult.Pushed => 1, _ => 2 });
                 }
             }
 
             break;
         }
 
-        if (Pressed(keys, Keys.Q))
+        if ((Pressed(keys, Keys.Q) && _camera.TurnLeft()) || (Pressed(keys, Keys.E) && _camera.TurnRight()))
         {
-            _camera.TurnLeft();
-        }
-        else if (Pressed(keys, Keys.E))
-        {
-            _camera.TurnRight();
+            _sounds.Play(8);
         }
 
         // shortcut: undo and retry are keys until M3's menu, which the original opens with □. Like the menu, they
@@ -210,14 +233,6 @@ public sealed class PuzzleBoyGame : Game
             _lock = StartLock;
         }
     }
-
-    private static (int X, int Y) Offset(Direction direction) => direction switch
-    {
-        Direction.PlusY => (0, 1),
-        Direction.PlusX => (1, 0),
-        Direction.MinusY => (0, -1),
-        _ => (-1, 0),
-    };
 
     private bool Pressed(KeyboardState keys, Keys key) => keys.IsKeyDown(key) && _previousKeys.IsKeyUp(key);
 
