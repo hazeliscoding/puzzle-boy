@@ -65,7 +65,8 @@ public sealed partial class GameInstall
     /// textures, and its Animator's default clip. Throws <see cref="InvalidDataException"/> when the data isn't the shape
     /// re/m3-jack.md records.
     /// </summary>
-    internal CharacterData ReadCharacter()
+    /// <param name="ramp">The toon ramp, <c>tone2</c> from the <c>common</c> bundle, read with that bundle's other textures.</param>
+    internal CharacterData ReadCharacter(TextureData ramp)
     {
         var manager = new AssetsManager();
         try
@@ -150,7 +151,7 @@ public sealed partial class GameInstall
             var placed = gameObjects.FindIndex(go => Component(go, AssetClassID.Animator) is not null);
             var (curves, bindings, loopTicks) = ReadIdle(Get(Component(gameObjects[placed], AssetClassID.Animator)!["m_Controller"]), Get, nodes, placed);
             var fire = nodes.FindIndex(node => node.Name == "h_fire");
-            return new CharacterData([.. nodes], placed, fire, [.. meshes], textures, curves, bindings, loopTicks, ReadTexture("common", "tone2"));
+            return new CharacterData([.. nodes], placed, fire, [.. meshes], textures, curves, bindings, loopTicks, ramp);
         }
         finally
         {

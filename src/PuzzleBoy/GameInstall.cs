@@ -77,20 +77,28 @@ public sealed partial class GameInstall
 
     /// <summary>
     /// Texture2D <paramref name="name"/> from one of the game's bundles, every mip level decoded to RGBA.
-    /// Throws <see cref="InvalidDataException"/> when it's missing or in a format the port doesn't read (DXT1 and RGB24 only).
+    /// Throws <see cref="InvalidDataException"/> when it's missing or in a format the port doesn't read (DXT1, RGB24 and RGBA32 only).
     /// </summary>
-    public TextureData ReadTexture(string bundle, string name)
+    public TextureData ReadTexture(string bundle, string name) => ReadTextures(bundle, name)[name];
+
+    /// <summary>
+    /// Several textures from one bundle, by name, opening it once: a large bundle like <c>common</c> takes a while to
+    /// unpack. Throws as <see cref="ReadTexture"/> does.
+    /// </summary>
+    public Dictionary<string, TextureData> ReadTextures(string bundle, params string[] names)
     {
         var manager = new AssetsManager();
         try
         {
             var bundleFile = manager.LoadBundleFile(BundlePath(Directory, bundle), true);
             var assets = manager.LoadAssetsFileFromBundle(bundleFile, 0, false);
-            var texture = assets.file.GetAssetsOfType(AssetClassID.Texture2D)
+            var found = assets.file.GetAssetsOfType(AssetClassID.Texture2D)
                 .Select(info => manager.GetBaseField(assets, info))
-                .FirstOrDefault(field => field["m_Name"].AsString == name)
-                ?? throw new InvalidDataException($"There's no texture {name} in {bundle}.");
-            return DecodeTexture(bundleFile, texture, bundle);
+                .Where(field => names.Contains(field["m_Name"].AsString))
+                .GroupBy(field => field["m_Name"].AsString)
+                .ToDictionary(group => group.Key, group => DecodeTexture(bundleFile, group.First(), bundle));
+            var missing = names.FirstOrDefault(name => !found.ContainsKey(name));
+            return missing is null ? found : throw new InvalidDataException($"There's no texture {missing} in {bundle}.");
         }
         finally
         {
@@ -117,6 +125,7 @@ public sealed partial class GameInstall
             {
                 10 => (TextureDecoder.Dxt1(data.AsSpan(at), w, h), TextureDecoder.Dxt1Size(w, h)),
                 3 => (TextureDecoder.Rgb24(data.AsSpan(at), w, h), w * h * 3),
+                4 => (data.AsSpan(at, w * h * 4).ToArray(), w * h * 4),
                 _ => throw new InvalidDataException($"Texture {texture["m_Name"].AsString} in {bundle} has format {format}, which the port doesn't read."),
             };
             levels.Add(pixels);
