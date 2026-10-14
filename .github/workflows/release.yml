@@ -1,0 +1,46 @@
+name: Release
+
+# A v* tag publishes a GitHub release. A manual run only builds the archives, as workflow artifacts.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    # Every build comes from Linux: MonoGame's packages carry the native libraries for all three systems.
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      # Self-contained, so players don't need .NET installed. Tarballs keep the executable bit on macOS and Linux.
+      - name: Publish
+        run: |
+          for rid in win-x64 linux-x64 osx-arm64 osx-x64; do
+            dotnet publish src/PuzzleBoy --configuration Release --runtime "$rid" --self-contained --output "out/$rid"
+          done
+          (cd out/win-x64 && zip -qr ../../puzzle-boy-win-x64.zip .)
+          for rid in linux-x64 osx-arm64 osx-x64; do
+            tar -czf "puzzle-boy-$rid.tar.gz" -C "out/$rid" .
+          done
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: puzzle-boy
+          path: puzzle-boy-*
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" puzzle-boy-* --title "Puzzle Boy $GITHUB_REF_NAME" --generate-notes
