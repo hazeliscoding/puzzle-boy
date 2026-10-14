@@ -197,8 +197,8 @@ Read through REA by four readers, each re-checked by an adversarial verifier: 94
 
 - [x] Answer M2's open control questions from the game's code: how directions map after an L1/R1 turn and by how much the view turns, whether holding a direction repeats, and undo in play. Label each answer as in M2.
   - CODE: directions follow the view, and each L1/R1 press turns it 90°. Holding a direction walks continuously. Undo works as M0 says. None of it has been seen in play yet. See "M3 findings".
-- [ ] Camera, Jack-o'-Lantern, stage dialogue, music and sound effects.
-  - Done: the 30-tick clock, the move timing, the follow camera with L1/R1, the overhead view and scroll mode. Scroll mode's direction arrows come with the HUD.
+- [x] Camera, Jack-o'-Lantern, stage dialogue, music and sound effects.
+  - Done: the 30-tick clock, the move timing, the follow camera with L1/R1, the overhead view and scroll mode.
   - Done: the board's look: the atlas textures, glass walls, outlines, the goal and the backdrop, all read from the player's install.
   - Done: the sound effects (step, push, turn, fall, view change and goal) and the looping music, with the original's triggers. The menu sounds come with the menu.
   - Done: Jack-o'-Lantern from the player's install: his skinned model, idle animation, facing, toon shading, shadow and lantern glow.
