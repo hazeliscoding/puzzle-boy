@@ -123,6 +123,7 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
   - A local search over the port's rules proves 18 of the 21 solvable, from 4 pushes or turns (stage 1) to 109 (file 13).
   - Files 49, 25 and 26 are larger than the search budget (6 million positions), but they use only features the solved stages exercise: multi-cell blocks, holes, and swivels with 1 to 4 arms.
   - Every swivel arm in a played stage is one cell long, so the original's long-arm quirk never applies.
+  - VERIFIED: AppMedia's recorded HD solutions clear all 20 level-1 stages in the port, including 49, 25 and 26. That's 2,756 inputs: every stage clears exactly on its last input, and no input is refused. Only the default mapping clears all 20; a second mapping also clears stages 2, 4 and 16. The replay is a local check in `re/research/check/`, since it reads the stages and the guide.
 - [ ] Confirm in the real game what the code can't show. Labels: **VERIFIED** (seen in the HD game or a video of it, or a recorded solution replayed in the port), **CODE** (read from the decompiled game, see M0), **DOCUMENTED** (a guide says so), **INFERRED**, **UNKNOWN**. Sources: a gameplay video of the HD release ([all 20 stages](https://www.youtube.com/watch?v=tEmsZPDJsdc), times below) and [AppMedia's input lists](https://appmedia.jp/megaten3/5551711) (HD, all 20 stages; the guide text stays in `re/`).
   - VERIFIED: the default camera shows +x to the right and +y up the screen, and Up moves toward +y. In stage 1 (0:31) the swivel's +y arm sits above its center, and AppMedia's 22 stage 1 inputs clear the port under this mapping and under none of the other 7. The port drew +y down, a mirror image, until this was fixed.
   - VERIFIED: stage 1 is file 02, and all 20 layouts match the order above; the HUD shows the stage number.
@@ -133,6 +134,8 @@ To settle before M3: the brand. It must be an original mark with no Atlus logos 
   - UNKNOWN: whether holding a direction repeats. No guide or video shows it.
 
 **Done when** the tests pass and, for every stage, a solution found in the original also solves the stage in the port.
+
+**Status:** met for the 20 stages players reach. File 00 has no recorded solution, because no guide or video reaches it. The in-game checks above still have UNKNOWNs.
 
 ## M3: Presentation and release
 
