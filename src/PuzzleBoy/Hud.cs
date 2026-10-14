@@ -25,6 +25,12 @@ internal enum BarSet
 
     /// <summary>PZL02: Scroll, Rotate, Toggle Scroll, Angle.</summary>
     Scroll,
+
+    /// <summary>PZL03, while the menu is open: Select, Cancel, Confirm.</summary>
+    Menu,
+
+    /// <summary>PZL04, while help is open: Cancel.</summary>
+    Help,
 }
 
 /// <summary>What the HUD shows this tick.</summary>
@@ -65,7 +71,30 @@ internal sealed class Hud : IDisposable
     // Key icons on the keyboard sheet (48x48). The original's PC keys: WASD move, Q/E turn, F menu, Tab scroll, V angle.
     private static readonly Rectangle KeyW = new(1612, 60, 48, 48), KeyA = new(28, 60, 48, 48), KeyS = new(1324, 60, 48, 48), KeyD = new(244, 60, 48, 48);
     private static readonly Rectangle KeyQ = new(1180, 60, 48, 48), KeyE = new(316, 60, 48, 48), KeyF = new(388, 60, 48, 48), KeyV = new(1540, 60, 48, 48);
-    private static readonly Rectangle KeyTab = new(460, 108, 48, 48);
+    private static readonly Rectangle KeyTab = new(460, 108, 48, 48), KeySpace = new(532, 108, 48, 48), KeyBackspace = new(316, 108, 48, 48);
+
+    // In the menu and help, Space (or Enter) confirms and Backspace cancels; the original's keys for these are unknown.
+    private static readonly (Rectangle[] Keys, string Label)[] MenuSets =
+        [([KeyW, KeyS], "GUIDE_L0001"), ([KeyBackspace], "GUIDE_L0002"), ([KeySpace], "GUIDE_L0003")];
+
+    private static readonly (Rectangle[] Keys, string Label)[] HelpSets = [([KeyBackspace], "GUIDE_L0002")];
+
+    // Help's text: string id, material, box (x, width) for centring, pen x, baseline (re/m3-ui.md, section 7).
+    private static readonly (string Id, string Material, bool Centre, float X, float Width, float Baseline)[] HelpLines =
+    [
+        ("PBHELP_L0034", "TMC12", true, 203, 210.01f, 205.96f),
+        ("PBHELP_L0035", "TMC24", false, 258, 0, 265.96f),
+        ("PBHELP_L0036", "TMC24", false, 258, 0, 315.96f),
+        ("PBHELP_L0037", "TMC12", true, 182, 252.01f, 395.96f),
+        ("PBHELP_L0038", "TMC25", false, 238, 0, 456.96f),
+        ("PBHELP_L0039", "TMC24", false, 258, 0, 505.96f),
+        ("PBHELP_L0040", "TMC24", false, 258, 0, 555.96f),
+        ("PBHELP_L0041", "TMC25", false, 238, 0, 638.96f),
+        ("PBHELP_L0042", "TMC24", false, 258, 0, 687.96f),
+        ("PBHELP_L0043", "TMC25", false, 238, 0, 770.96f),
+        ("PBHELP_L0044", "TMC24", false, 258, 0, 819.96f),
+        ("PBHELP_L0045", "TMC24", false, 258, 0, 869.96f),
+    ];
 
     // The bar's sets, left to right: key icons and the label's string id.
     private static readonly (Rectangle[] Keys, string Label)[] PlaySets =
@@ -130,6 +159,11 @@ internal sealed class Hud : IDisposable
             var shown = dialogue.Lines[i].Take(left).ToList();
             left -= shown.Count;
             Runs(_typed, shown, materials, 53, 213, 890.1f + (60 * i), dialogue.WindowOpacity);
+        }
+
+        if (dialogue.ShowsChoices)
+        {
+            DrawChoices(dialogue.Choices!, dialogue.Choice);
         }
 
         if (dialogue.ShowsIcon)
@@ -238,10 +272,58 @@ internal sealed class Hud : IDisposable
         }
 
         _sprites.End();
-        if (state.Bar != BarSet.None)
+        var sets = state.Bar switch
         {
-            DrawBar(state.Bar == BarSet.Play ? PlaySets : ScrollSets, BarOpacity(state.BarTicks));
+            BarSet.Play => PlaySets,
+            BarSet.Scroll => ScrollSets,
+            BarSet.Menu => MenuSets,
+            BarSet.Help => HelpSets,
+            _ => null,
+        };
+        if (sets is not null)
+        {
+            DrawBar(sets, BarOpacity(state.BarTicks));
         }
+    }
+
+    /// <summary>The □ menu (re/m3-ui.md, section 6): its panel, the cursor and the four items.</summary>
+    public void DrawMenu(Menu menu)
+    {
+        Begin(BlendState.NonPremultiplied);
+        Sprite(_sheet, new(632, 808, 516, 284), new(90, 138, 516, 284));
+        Sprite(_sheet, new(1964, 4, 60, 56), new(104, 164 + (58 * (int)menu.Cursor), 60, 56));
+        Swap(BlendState.AlphaBlend);
+        for (var i = 0; i < Menu.Labels.Length; i++)
+        {
+            Text(_text.Strings[Menu.Labels[i]], 42, "TMC22", 168, 207.96f + (58 * i));
+        }
+
+        _sprites.End();
+    }
+
+    /// <summary>The rules screen (re/m3-ui.md, section 7): glows, the panel with its pictures, header icons, then the text.</summary>
+    public void DrawHelp()
+    {
+        // shortcut: the top glow is the bottom one turned 180 degrees; its borders are equal, so mirroring the ends doesn't matter.
+        Begin(BlendState.Additive);
+        Sliced(_sheet, new(1936, 4, 24, 128), 8, 8, new(-4, 932, 1928, 128), 1);
+        Sliced(_sheet, new(1936, 4, 24, 128), 8, 8, new(-4, 20, 1928, 128), 1, upsideDown: true);
+        Swap(BlendState.NonPremultiplied);
+        Sprite(_sheet, new(4, 4, 1928, 800), new(-4, 140, 1928, 800));
+        foreach (var (x, y) in new[] { (98f, 160f), (458.01f, 160f), (98f, 350f), (458.01f, 350f) })
+        {
+            Sprite(_sheet, new(1964, 64, 60, 60), new(x, y, 60, 60));
+        }
+
+        Swap(BlendState.AlphaBlend);
+        foreach (var (id, material, centre, x, width, baseline) in HelpLines)
+        {
+            var text = _text.Strings[id];
+            var pen = centre ? x + ((width - TextRenderer.Advance(_text.Font, text, 42)) / 2) : x;
+            Text(text, 42, material, pen, baseline);
+        }
+
+        _sprites.End();
     }
 
     /// <inheritdoc />
@@ -266,6 +348,31 @@ internal sealed class Hud : IDisposable
         }
 
         bakes.Clear();
+    }
+
+    /// <summary>
+    /// A question's choice box, its bottom-right corner at (1868, 758), with the cursor on <paramref name="choice"/>.
+    /// Expects an open batch with <see cref="BlendState.AlphaBlend"/> and leaves one open.
+    /// </summary>
+    private void DrawChoices(IReadOnlyList<string> choices, int choice)
+    {
+        // shortcut: no footage shows this box, so its rows are spaced evenly in the window's native height. Upgrade
+        // with the talk01_choice prefab's layout if a capture of the quit question turns up.
+        var widest = choices.Max(c => TextRenderer.Advance(_text.Font, c, 53));
+        var (width, height) = (Math.Max(480, 48 + 52 + widest + 48), 244f);
+        var (x, y) = (1868 - width, 758 - height);
+        Swap(BlendState.NonPremultiplied);
+        Sliced(_talk, new(40, 28, 504, 244), 240, 240, new(x, y, width, height), 0.702f);
+        var rows = choices.Select((_, i) => y + (height / (choices.Count + 1) * (i + 1))).ToArray();
+        Sprite(_talk, new(596, 214, 40, 34), new(x + 48, rows[choice] - 17, 40, 34));
+        Swap(BlendState.Additive);
+        Sprite(_talk, new(596, 214, 40, 34), new(x + 48, rows[choice] - 17, 40, 34), 0.196f);
+        Sprite(_talk, new(596, 214, 40, 34), new(x + 48, rows[choice] - 17, 40, 34), 0.196f);
+        Swap(BlendState.AlphaBlend);
+        for (var i = 0; i < choices.Count; i++)
+        {
+            Text(choices[i], 53, "FOT-MatisseProN-B SDF Material", x + 48 + 52, TextRenderer.MiddleBaseline(_text.Font, rows[i], 53));
+        }
     }
 
     /// <summary>The controls bar: a dark strip, then each set's key icons and label, right to left.</summary>
@@ -328,17 +435,17 @@ internal sealed class Hud : IDisposable
     /// A sprite cut in three across: fixed borders of <paramref name="left"/> and <paramref name="right"/> texels at each
     /// end and a stretched middle. A target narrower than both borders shrinks them in proportion, as Unity does.
     /// </summary>
-    private void Sliced(Texture2D sheet, Rectangle unity, int left, int right, RectangleF layout, float alpha)
+    private void Sliced(Texture2D sheet, Rectangle unity, int left, int right, RectangleF layout, float alpha, bool upsideDown = false)
     {
         var shrink = Math.Min(1, layout.Width / (left + right));
         var (l, r) = (left * shrink, right * shrink);
-        Sprite(sheet, new(unity.X, unity.Y, left, unity.Height), new(layout.X, layout.Y, l, layout.Height), alpha);
+        Sprite(sheet, new(unity.X, unity.Y, left, unity.Height), new(layout.X, layout.Y, l, layout.Height), alpha, upsideDown);
         if (layout.Width > l + r)
         {
-            Sprite(sheet, new(unity.X + left, unity.Y, unity.Width - left - right, unity.Height), new(layout.X + l, layout.Y, layout.Width - l - r, layout.Height), alpha);
+            Sprite(sheet, new(unity.X + left, unity.Y, unity.Width - left - right, unity.Height), new(layout.X + l, layout.Y, layout.Width - l - r, layout.Height), alpha, upsideDown);
         }
 
-        Sprite(sheet, new(unity.Right - right, unity.Y, right, unity.Height), new(layout.X + layout.Width - r, layout.Y, r, layout.Height), alpha);
+        Sprite(sheet, new(unity.Right - right, unity.Y, right, unity.Height), new(layout.X + layout.Width - r, layout.Y, r, layout.Height), alpha, upsideDown);
     }
 
     /// <summary>A cubic Hermite segment from p0 (slope m0) to p1 (slope m1) over <paramref name="length"/> seconds, at fraction <paramref name="s"/>.</summary>
@@ -363,12 +470,15 @@ internal sealed class Hud : IDisposable
     }
 
     /// <summary>Stretches a sheet rect (Unity's, from the bottom-left) over a layout rect, at <paramref name="alpha"/>.</summary>
-    private void Sprite(Texture2D sheet, Rectangle unity, RectangleF layout, float alpha = 1)
+    private void Sprite(Texture2D sheet, Rectangle unity, RectangleF layout, float alpha = 1, bool upsideDown = false)
     {
         var position = _fit.Offset + (new Vector2(layout.X, layout.Y) * _fit.Scale);
         var scale = new Vector2(layout.Width / unity.Width, layout.Height / unity.Height) * _fit.Scale;
+
         // Fading a straight-alpha sprite scales its alpha only; the additive glows take the same alpha as their strength.
-        _sprites.Draw(sheet, position, unity, new Color(Color.White, alpha), 0, Vector2.Zero, scale, SpriteEffects.FlipVertically, 0);
+        // The sheets keep Unity's bottom-up rows, so an upright sprite is flipped vertically; turned 180 degrees, horizontally.
+        var flip = upsideDown ? SpriteEffects.FlipHorizontally : SpriteEffects.FlipVertically;
+        _sprites.Draw(sheet, position, unity, new Color(Color.White, alpha), 0, Vector2.Zero, scale, flip, 0);
     }
 
     /// <summary>A rectangle in layout units, which can be fractional.</summary>

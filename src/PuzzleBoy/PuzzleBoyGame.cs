@@ -8,7 +8,7 @@ namespace PuzzleBoy;
 /// <summary>
 /// The game window: plays the original's stages in order with its tick rate, move timing, follow camera and board look
 /// (ROADMAP.md, "M3 findings"). Arrow keys or WASD move, Q and E turn the view (L1/R1), V switches to overhead (○),
-/// Tab scrolls (△), Z or Backspace undoes, R retries, Escape quits.
+/// Tab scrolls (△), F opens the menu (□), Enter or Space confirms, Backspace cancels, Escape quits.
 /// </summary>
 public sealed class PuzzleBoyGame : Game
 {
@@ -42,6 +42,11 @@ public sealed class PuzzleBoyGame : Game
     private Board _board = null!;
     private MoveAnimation? _animation;
     private Dialogue? _dialogue;
+    private readonly Menu _menu = new();
+    private readonly KeyRepeat _up = new();
+    private readonly KeyRepeat _down = new();
+    private bool _menuOpen;
+    private bool _helpOpen;
     private CharacterModel[] _models = [];
     private Direction?[] _facings = [];
     private (int X, int Y)? _scroll;
@@ -123,20 +128,12 @@ public sealed class PuzzleBoyGame : Game
             _animation = null;
         }
 
+        // The pad layer counts held keys every tick, whatever reads them, so the repeat runs on even when nothing listens.
+        var up = _up.Fires(keys.IsKeyDown(Keys.Up) || keys.IsKeyDown(Keys.W));
+        var down = _down.Fires(keys.IsKeyDown(Keys.Down) || keys.IsKeyDown(Keys.S));
         if (_dialogue is { } dialogue)
         {
-            // While the Manikin Kid talks the board takes no input. Enter or Space turns his pages.
-            dialogue.Tick();
-            if (Pressed(keys, Keys.Enter) || Pressed(keys, Keys.Space))
-            {
-                dialogue.Confirm();
-            }
-
-            if (dialogue.Finished)
-            {
-                _dialogue = null;
-                _barTicks = 0;
-            }
+            Talk(dialogue, keys, up ? -1 : down ? 1 : 0);
         }
         else if (_board.IsCleared)
         {
@@ -149,13 +146,26 @@ public sealed class PuzzleBoyGame : Game
         {
             _lock--;
         }
+        else if (_helpOpen)
+        {
+            // Confirm, cancel or □ closes the rules.
+            if (Pressed(keys, Keys.Enter) || Pressed(keys, Keys.Space) || Pressed(keys, Keys.Back) || Pressed(keys, Keys.F))
+            {
+                _helpOpen = false;
+                _sounds.Play(5);
+            }
+        }
+        else if (_menuOpen)
+        {
+            Choose(keys, up ? -1 : down ? 1 : 0);
+        }
         else if (_animation is null)
         {
             // The original reads no input at all while a move plays; a press made then is lost, not queued.
             Play(keys);
         }
 
-        // Developer shortcut until the menu exists: skip between stages.
+        // Developer shortcut: skip between stages.
         if (Pressed(keys, Keys.PageDown) || Pressed(keys, Keys.PageUp))
         {
             Load((_current + (Pressed(keys, Keys.PageDown) ? 1 : _assets.Stages.Count - 1)) % _assets.Stages.Count);
@@ -177,9 +187,19 @@ public sealed class PuzzleBoyGame : Game
 
         // COMPLETE! shows from the clear's first tick, the one after the last move ends, for 30 ticks.
         var clear = _board.IsCleared && _clearedFor is >= 4 and < 34;
-        // The controls bar hides while the Manikin Kid talks; his window draws over everything.
-        var bar = _dialogue is not null ? BarSet.None : _scroll is null ? BarSet.Play : BarSet.Scroll;
+        // The controls bar hides while the Manikin Kid talks and shows the menu's or help's keys while they're up.
+        var bar = _dialogue is not null ? BarSet.None : _helpOpen ? BarSet.Help : _menuOpen ? BarSet.Menu : _scroll is null ? BarSet.Play : BarSet.Scroll;
         _hud.Draw(new HudState(_current + 1, clear, _undoTicks > 0, ScrollArrows(), _scrollTicks, bar, _barTicks));
+        if (_menuOpen)
+        {
+            _hud.DrawMenu(_menu);
+        }
+
+        if (_helpOpen)
+        {
+            _hud.DrawHelp();
+        }
+
         if (_dialogue is not null)
         {
             _hud.DrawDialogue(_dialogue);
@@ -203,6 +223,8 @@ public sealed class PuzzleBoyGame : Game
         _stageTicks = 0;
         _animation = null;
         _scroll = null;
+        _menuOpen = false;
+        _helpOpen = false;
         _clearedFor = 0;
         _lock = StartLock;
     }
@@ -259,28 +281,111 @@ public sealed class PuzzleBoyGame : Game
             _sounds.Play(8);
         }
 
-        // shortcut: undo and retry are keys until M3's menu, which the original opens with □. Like the menu, they
-        // wait for a move or a turn to end and don't work in scroll mode.
-        if (_animation is not null || _camera.IsTurning || _scroll is not null)
+        // □ opens the menu only in play: not in scroll mode, and not once a move or a turn has started this tick.
+        if (Pressed(keys, Keys.F) && _animation is null && !_camera.IsTurning && _scroll is null)
         {
+            _menuOpen = true;
+            _menu.Reset();
+            _sounds.Play(4);
+        }
+    }
+
+    /// <summary>
+    /// One tick of the Manikin Kid's window: confirm turns his pages, and a question's choice moves by
+    /// <paramref name="move"/>. Answering the quit question with its first option ends the game.
+    /// </summary>
+    private void Talk(Dialogue dialogue, KeyboardState keys, int move)
+    {
+        dialogue.Tick();
+
+        // INFERRED: the choice box plays the menu's sounds; the footage never shows it.
+        if (dialogue.ShowsChoices && Pressed(keys, Keys.Back))
+        {
+            dialogue.Cancel();
+            _sounds.Play(5);
+        }
+        else if (Pressed(keys, Keys.Enter) || Pressed(keys, Keys.Space))
+        {
+            if (dialogue.ShowsChoices)
+            {
+                _sounds.Play(4);
+            }
+
+            dialogue.Confirm();
+        }
+        else if (dialogue.ShowsChoices && move != 0)
+        {
+            dialogue.MoveChoice(move);
+            _sounds.Play(6);
+        }
+
+        if (dialogue.Finished)
+        {
+            _dialogue = null;
+            _barTicks = 0;
+
+            // shortcut: the original fades the music out before Puzzle Boy ends; the port closes at once.
+            if (dialogue.Choices is not null && dialogue.Choice == 0)
+            {
+                Exit();
+            }
+        }
+    }
+
+    /// <summary>One tick of the open □ menu (re/m3-ui.md, section 6); its cursor moves by <paramref name="move"/>.</summary>
+    private void Choose(KeyboardState keys, int move)
+    {
+        // Cancel wins when it lands on the same tick as confirm.
+        if (Pressed(keys, Keys.Back) || Pressed(keys, Keys.F))
+        {
+            _menuOpen = false;
+            _sounds.Play(5);
+        }
+        else if (Pressed(keys, Keys.Enter) || Pressed(keys, Keys.Space))
+        {
+            Run(_menu.Cursor);
+        }
+        else if (move != 0)
+        {
+            _menu.Move(move);
+            _sounds.Play(6);
+        }
+    }
+
+    /// <summary>Runs a menu item, or buzzes when it can't run (Undo with no history).</summary>
+    private void Run(MenuItem item)
+    {
+        if (item == MenuItem.Undo && !_board.Undo())
+        {
+            _sounds.Play(7);
             return;
         }
 
-        if ((Pressed(keys, Keys.Z) || Pressed(keys, Keys.Back)) && _board.Undo())
+        _sounds.Play(4);
+        _menuOpen = item == MenuItem.Undo;
+        switch (item)
         {
-            // UNDO shows for 30 ticks from the tick the board reverts.
-            _undoTicks = 30;
-        }
-        else if (Pressed(keys, Keys.R))
-        {
-            _board.Retry();
+            case MenuItem.Undo:
+                // UNDO shows for 30 ticks from the tick the board reverts, and the menu stays open.
+                _undoTicks = 30;
+                break;
+            case MenuItem.Restart:
+                _board.Retry();
 
-            // INFERRED: the original's restart reruns its stage start, so the Manikin Kid talks again.
-            _dialogue = StageDialogue(_current + 1);
-            _barTicks = 0;
-            _facings = new Direction?[_board.Characters.Count];
-            _stageTicks = 0;
-            _lock = StartLock;
+                // INFERRED: the original's restart reruns its stage start, so the Manikin Kid talks again.
+                _dialogue = StageDialogue(_current + 1);
+                _barTicks = 0;
+                _facings = new Direction?[_board.Characters.Count];
+                _stageTicks = 0;
+                _lock = StartLock;
+                break;
+            case MenuItem.Help:
+                _helpOpen = true;
+                break;
+            case MenuItem.Quit:
+                var text = _assets.Text.Strings;
+                _dialogue = new Dialogue([text["PBMESSAGE_L0007"]], text["PBMESSAGE_L0008"].Split('\n'));
+                break;
         }
     }
 

@@ -5,7 +5,11 @@ namespace PuzzleBoy;
 /// the advance icon a tick after the last one, confirm to turn the page, then a short fade.
 /// </summary>
 /// <param name="pages">The pages' text, with the original's <c>&lt;COLOR n&gt;</c> tags and line breaks.</param>
-internal sealed class Dialogue(IEnumerable<string> pages)
+/// <param name="choices">
+/// For a question, its options: they show once the last page has typed, with no advance icon, and the cursor starts on
+/// the last one. Null for plain talk.
+/// </param>
+internal sealed class Dialogue(IEnumerable<string> pages, IReadOnlyList<string>? choices = null)
 {
     // After the last page the name and its plate fade over 2 ticks, the text and the window over 7.
     private const int NameFade = 2;
@@ -38,8 +42,17 @@ internal sealed class Dialogue(IEnumerable<string> pages)
     /// <summary>How many of the page's characters show so far; line breaks don't count.</summary>
     public int Revealed => _revealed;
 
-    /// <summary>True from the tick after the page's last character until confirm.</summary>
-    public bool ShowsIcon => _closing < 0 && _revealed >= Total && _doneTicks >= 1;
+    /// <summary>True from the tick after the page's last character until confirm; a question shows its choices instead.</summary>
+    public bool ShowsIcon => _closing < 0 && _revealed >= Total && _doneTicks >= 1 && !ShowsChoices;
+
+    /// <summary>The question's options, or null for plain talk.</summary>
+    public IReadOnlyList<string>? Choices => choices;
+
+    /// <summary>True once a question's last page has typed, until it's answered.</summary>
+    public bool ShowsChoices => choices is not null && _closing < 0 && Page == _pages.Count - 1 && _revealed >= Total;
+
+    /// <summary>The option under the cursor; the original starts it on the last option, "No".</summary>
+    public int Choice { get; private set; } = (choices?.Count ?? 1) - 1;
 
     /// <summary>The window's and the text's opacity: 1, then fading over 7 ticks after the last page.</summary>
     public float WindowOpacity => _closing < 0 ? 1 : 1 - (Math.Min(_closing, WindowFade) / (float)WindowFade);
@@ -107,12 +120,35 @@ internal sealed class Dialogue(IEnumerable<string> pages)
         {
             (_revealed, _doneTicks) = (Total, 0);
         }
+        else if (ShowsChoices)
+        {
+            _closing = 0;
+        }
         else if (ShowsIcon && Page + 1 < _pages.Count)
         {
             (Page, _revealed, _doneTicks) = (Page + 1, 0, 0);
         }
         else if (ShowsIcon)
         {
+            _closing = 0;
+        }
+    }
+
+    /// <summary>Moves a question's cursor <paramref name="by"/> options, wrapping. Does nothing when no choices show.</summary>
+    public void MoveChoice(int by)
+    {
+        if (ShowsChoices)
+        {
+            Choice = (((Choice + by) % choices!.Count) + choices.Count) % choices.Count;
+        }
+    }
+
+    /// <summary>Cancel on a question: picks the last option, "No", and closes.</summary>
+    public void Cancel()
+    {
+        if (ShowsChoices)
+        {
+            Choice = choices!.Count - 1;
             _closing = 0;
         }
     }
