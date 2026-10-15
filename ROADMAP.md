@@ -245,7 +245,7 @@ The stage files the original ships but never plays, after stage 20. See the deci
 
 **Done when** every bonus stage that ships has a solution that clears it in the port, and the switch's rules have tests.
 
-## M5: Split into three repos (done 2026.10.15)
+## M5: Split into three repos (local gates pass 2026.10.15; CI waits on the engine's publication)
 
 This repo goes back to being a faithful preservation port of the original 20 stages. The rules move to a shared engine, and everything the original never had moves to a standalone Community Edition that needs no Nocturne.
 
@@ -262,6 +262,7 @@ This repo goes back to being a faithful preservation port of the original 20 sta
   - `Hud.cs` is back to v0.1.0, and `PuzzleBoyGame.cs` differs from v0.1.0 only by the key table and the removed skip.
 - [x] Update the docs to tell the preservation port apart from Community Edition.
   - README, AGENTS.md and the docs. `docs/bonus-stages.md` stays as history, with a note that bonus play moved to Community Edition.
+- [ ] CI passes on GitHub once the engine is published.
 
 **Done when** this repo builds and tests against the pinned engine, plays exactly the 20 original stages, and passes every CI gate including the no-game-data check.
 

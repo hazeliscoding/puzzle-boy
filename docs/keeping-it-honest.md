@@ -49,7 +49,7 @@ flowchart LR
 
 - **No game data:** `scripts/check-no-game-data.sh` fails on Unity bundles, FMOD banks, IL2CPP metadata, Atlus flow scripts, stage files outside the tests, and decompiler output.
 - Its positive control, `check-no-game-data.test.sh`, plants each of those in a scratch repo and expects the check to fail. A check for something's absence needs proof that it can fail. Every scratch repo also holds a submodule, which the check must skip, since the engine repo runs the same check on its own files.
-- **The engine is a pinned submodule.** CI checks out `external/puzzle-boy-engine` at the pinned commit and stops with a clear message if it's missing, rather than failing later in restore.
+- **The engine is a pinned submodule.** CI checks out `external/puzzle-boy-engine` at the pinned commit and stops with a clear message if it's missing, rather than failing later in restore. Until the engine is published on GitHub, that checkout fails, so CI is blocked; local clones override the URL.
 - **The original's scope.** Tests prove the game loads only the original's 20 stage files, never references `Board.Switch` (a scan of its metadata, with `Board.Step` as the positive control) and reads no switch or stage-skip key.
 - **Docs are part of the build.** Every public type and member needs an XML doc comment, or the build fails (CS1591).
 - **Releases** are self-contained, so players don't need .NET. CI has no game install, so each archive must start on its own OS and reach the "there's no game here" message before the release is created.
