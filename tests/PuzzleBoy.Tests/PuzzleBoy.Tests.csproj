@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PuzzleBoy\PuzzleBoy.csproj" />
-    <ProjectReference Include="..\..\src\PuzzleBoy.Rules\PuzzleBoy.Rules.csproj" />
+    <ProjectReference Include="..\..\external\puzzle-boy-engine\src\PuzzleBoy.Rules\PuzzleBoy.Rules.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PuzzleBoy.Nocturne;
+using PuzzleBoy.Rendering;
 
 namespace PuzzleBoy;
 
@@ -31,13 +33,10 @@ internal enum BarSet
 
     /// <summary>PZL04, while help is open: Cancel.</summary>
     Help,
-
-    /// <summary>PZL01 with the port's switch after Move, while more than one character is on the board.</summary>
-    Switch,
 }
 
 /// <summary>What the HUD shows this tick.</summary>
-/// <param name="Stage">The stage number, from 1; bonus stages follow stage 20.</param>
+/// <param name="Stage">The stage number, 1 to 20.</param>
 /// <param name="Clear">True while COMPLETE! shows.</param>
 /// <param name="Undo">True while UNDO shows.</param>
 /// <param name="Arrows">The scroll arrows to show, one bit per screen direction: 1 up, 2 right, 4 down, 8 left.</param>
@@ -74,7 +73,6 @@ internal sealed class Hud : IDisposable
     // Key icons on the keyboard sheet (48x48). The original's PC keys: WASD move, Q/E turn, F menu, Tab scroll, V angle.
     private static readonly Rectangle KeyW = new(1612, 60, 48, 48), KeyA = new(28, 60, 48, 48), KeyS = new(1324, 60, 48, 48), KeyD = new(244, 60, 48, 48);
     private static readonly Rectangle KeyQ = new(1180, 60, 48, 48), KeyE = new(316, 60, 48, 48), KeyF = new(388, 60, 48, 48), KeyV = new(1540, 60, 48, 48);
-    private static readonly Rectangle KeyC = new(172, 60, 48, 48);
     private static readonly Rectangle KeyTab = new(460, 108, 48, 48), KeySpace = new(532, 108, 48, 48), KeyBackspace = new(316, 108, 48, 48);
 
     // In the menu and help, Space (or Enter) confirms and Backspace cancels; the original's keys for these are unknown.
@@ -103,9 +101,6 @@ internal sealed class Hud : IDisposable
     // The bar's sets, left to right: key icons and the label's string id.
     private static readonly (Rectangle[] Keys, string Label)[] PlaySets =
         [([KeyW, KeyA, KeyS, KeyD], "GUIDE_L0012"), ([KeyQ, KeyE], "GUIDE_L0021"), ([KeyF], "GUIDE_L0028"), ([KeyTab], "GUIDE_L0029"), ([KeyV], "GUIDE_L0032")];
-
-    // The switch is the port's (ROADMAP.md, M4), but the game's guide text has its label: "Switch Character".
-    private static readonly (Rectangle[] Keys, string Label)[] SwitchSets = [PlaySets[0], ([KeyC], "GUIDE_L0004"), .. PlaySets[1..]];
 
     private static readonly (Rectangle[] Keys, string Label)[] ScrollSets =
         [([KeyW, KeyA, KeyS, KeyD], "GUIDE_L0016"), ([KeyQ, KeyE], "GUIDE_L0021"), ([KeyTab], "GUIDE_L0029"), ([KeyV], "GUIDE_L0032")];
@@ -282,7 +277,6 @@ internal sealed class Hud : IDisposable
         var sets = state.Bar switch
         {
             BarSet.Play => PlaySets,
-            BarSet.Switch => SwitchSets,
             BarSet.Scroll => ScrollSets,
             BarSet.Menu => MenuSets,
             BarSet.Help => HelpSets,

@@ -1,3 +1,4 @@
+using PuzzleBoy.Nocturne;
 using PuzzleBoy.Rules;
 
 namespace PuzzleBoy;
@@ -17,8 +18,7 @@ internal sealed record GameAssets(
     /// <summary>Reads every asset, opening each bundle once; <c>common</c> is large and slow to unpack.</summary>
     public static GameAssets Read(GameInstall install)
     {
-        var text = install.ReadTextAssets("pazzleboy");
-        var stages = PlayOrder.Files.Concat(PlayOrder.Bonus).Select(file => (file, Stage.Parse(text[PlayOrder.AssetName(file)]))).ToList();
+        var stages = ReadStages(install.ReadTextAssets("pazzleboy"));
         var common = install.ReadTextures("common", "BG_pzl", "tone2", "pzlUI01", "pzlUI_font01_ja", "talkUI01");
         var english = install.ReadTextures("ui_tex_en", "pzlUI_font01_en", "buttonUI01_en_common");
         return new GameAssets(
@@ -31,4 +31,9 @@ internal sealed record GameAssets(
                 install.ReadTexture("ui_tex_keyboard_en", "buttonUI01_en_keyboard"), common["talkUI01"], english["buttonUI01_en_common"]),
             install.ReadText());
     }
+
+    /// <summary>The original's 20 stages in its order, from the <c>pazzleboy</c> bundle's TextAssets by name.</summary>
+    /// <exception cref="KeyNotFoundException">A stage file is missing from <paramref name="text"/>.</exception>
+    internal static List<(int File, Stage Stage)> ReadStages(IReadOnlyDictionary<string, byte[]> text) =>
+        [.. OriginalStageOrder.Files.Select(file => (file, Stage.Parse(text[OriginalStageOrder.AssetName(file)])))];
 }

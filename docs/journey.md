@@ -54,7 +54,7 @@ timeline
 
 ### Some stages could never be finished
 
-- Six of the seven stages with more than one Jack-o'-Lantern can't be won under the original's rules, because nothing lets you switch characters. The port adds a switch. See [Bonus stages](bonus-stages.md).
+- Six of the seven stages with more than one Jack-o'-Lantern can't be won under the original's rules, because nothing lets you switch characters. M4 added a switch and played them as bonus stages. Since the split, those belong to Community Edition, and this port plays the original 20. See [Bonus stages](bonus-stages.md).
 
 ## By the numbers
 
@@ -65,5 +65,5 @@ timeline
 | Research claims checked | 111 for the rules, 94 for the presentation |
 | Recorded inputs replayed in the port | 2,756 over 20 stages, none refused |
 | Fidelity bugs a review found in the first M3 build | 12, all fixed |
-| Tests | 164 |
+| Tests | 164 before the split; now 87 here and 202 in the engine |
 | Release archives | 4 (Windows, Linux, and Apple Silicon and Intel macOS), about 37 MB each |

@@ -1,7 +1,7 @@
 # Architecture
 
 > [!TIP]
-> **TL;DR:** There are two projects. `PuzzleBoy.Rules` holds the game's logic, with no graphics and no file access, so tests drive it with plain bytes. `PuzzleBoy` is the MonoGame app: it reads everything from your install once at startup, then runs the original's 30-tick loop.
+> **TL;DR:** There are two projects, plus the engine. The engine, [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine), is a git submodule in `external/puzzle-boy-engine` that Community Edition shares. Its `PuzzleBoy.Rules` holds the game's logic, with no graphics and no file access, so tests drive it with plain bytes. Its `PuzzleBoy.Nocturne` reads your install's bundles, and its `PuzzleBoy.Rendering` draws the board and Jack and plays the sounds. `PuzzleBoy` is the MonoGame app: it reads everything from your install once at startup, then runs the original's 30-tick loop and draws the HUD, dialogue and menu.
 
 **Read time:** 4 minutes
 
@@ -13,17 +13,24 @@ flowchart LR
         bundles[("Unity bundles<br>stages, text, sounds,<br>textures, Jack")]
     end
     subgraph app["PuzzleBoy (MonoGame)"]
-        gi["GameInstall<br>finds and reads the bundles"] --> ga["GameAssets<br>everything, decoded once"]
-        ga --> loop["PuzzleBoyGame<br>the tick loop"]
-        loop --> views["BoardView, CharacterView,<br>Hud, Sounds"]
+        order["OriginalStageOrder<br>which files, in what order"] --> ga
+        ga["GameAssets<br>everything, decoded once"] --> loop["PuzzleBoyGame<br>the tick loop"]
+        loop --> hud["Hud, TextRenderer,<br>dialogue and menu"]
     end
-    subgraph rules["PuzzleBoy.Rules"]
+    subgraph nocturne["PuzzleBoy.Nocturne, from the engine"]
+        gi["GameInstall<br>finds and reads the bundles"]
+    end
+    subgraph rendering["PuzzleBoy.Rendering, from the engine"]
+        views["BoardView, CharacterView,<br>ViewCamera, MoveAnimation, Sounds"]
+    end
+    subgraph rules["PuzzleBoy.Rules, from the engine"]
         stage["Stage<br>parses 828-byte files"] --> board["Board<br>steps, pushes, swivels, undo"]
-        order["PlayOrder<br>which files, in what order"]
     end
+    gi --> ga
+    loop --> views
     bundles --> gi
     ga -- "stage bytes" --> stage
-    loop -- "Step, Switch, Undo" --> board
+    loop -- "Step, Undo, Retry" --> board
 ```
 
 ## The trick that keeps it simple
@@ -65,12 +72,12 @@ sequenceDiagram
 | Type | Job |
 |---|---|
 | `Stage` | Parses a stage file, repairing the six damaged ones |
-| `Board` | The rules: steps, pushes, falls, swivels, the goal, the switch, undo and retry |
-| `PlayOrder` | The original's 20 stages, then the bonus stages |
-| `GameInstall` | Finds the Steam install and reads bundles with AssetsTools.NET |
+| `Board` | The rules: steps, pushes, falls, swivels, the goal, undo and retry. Its switch is Community Edition's; this port never calls it |
+| `OriginalStageOrder` | The original's 20 stage files, in its order |
+| `GameInstall` | Finds the Steam install and reads bundles with AssetsTools.NET (engine, `PuzzleBoy.Nocturne`) |
 | `GameAssets` | Reads and decodes every asset once at startup, in about 2 seconds |
 | `PuzzleBoyGame` | The tick loop: input, menus, dialogue, stage flow |
-| `ViewCamera` | The follow camera, view turns, the overhead view and the quake |
+| `ViewCamera` | The follow camera, view turns, the overhead view and the quake (engine, `PuzzleBoy.Rendering`, like the next three and `Sounds`) |
 | `MoveAnimation` | Replays one move over its ticks |
 | `BoardView` | Board geometry, glass walls, outlines, the goal and the backdrop |
 | `CharacterModel`, `CharacterView` | Pose and skin Jack each tick, then draw him with his shadow and glow |
@@ -88,5 +95,7 @@ sequenceDiagram
 ## Where to look
 
 - `src/PuzzleBoy/PuzzleBoyGame.cs`: start at `Update`, then `Play`.
-- `src/PuzzleBoy.Rules/Board.cs`: start at `Step`.
+- `external/puzzle-boy-engine/src/PuzzleBoy.Rules/Board.cs`: start at `Step`.
+- `external/puzzle-boy-engine/src/PuzzleBoy.Rendering/BoardView.cs`: start at `Draw`.
 - `tests/PuzzleBoy.Tests/Ascii.cs`: how tests draw stages as text.
+- `tests/PuzzleBoy.Tests/PreservationScopeTests.cs`: the checks that keep this port to the original's 20 stages.

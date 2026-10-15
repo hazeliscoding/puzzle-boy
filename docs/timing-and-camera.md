@@ -3,7 +3,7 @@
 > [!TIP]
 > **TL;DR:** The port runs at the original's 30 ticks a second, measured from gameplay video. A step takes 4 ticks, a push or a turn 5, and a fall 9. Input is read once per tick in a fixed order, and never while a move plays. The camera follows Jack, turns 90° at a time, and keys always follow the view.
 
-**Read time:** 4 minutes · **Code:** `PuzzleBoyGame.cs`, `ViewCamera.cs`, `MoveAnimation.cs`
+**Read time:** 4 minutes · **Code:** `PuzzleBoyGame.cs`, and `ViewCamera.cs` and `MoveAnimation.cs` in the engine's `PuzzleBoy.Rendering`
 
 ## Where 30 ticks a second comes from
 
@@ -54,7 +54,7 @@ stateDiagram-v2
 2. ○, overhead view (V)
 3. The directions: up, down, left, right. The first one held wins.
 4. L1 and R1, turning the view (Q and E)
-5. The port's own keys: switch (C), then □ for the menu (F)
+5. □ for the menu (F)
 
 ## The camera
 

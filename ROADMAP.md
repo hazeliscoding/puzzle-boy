@@ -44,6 +44,14 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **Only stages with a known solution ship, easiest first.** Each bonus stage needs a solution that clears in the port. They're ordered by the pushes and turns in the solution found, so the tutorial-sized files (00, 01, 30, 31) come first.
 - **The bundles can sit beside the executable.** Without an argument, the game first looks for `smt3hd_Data` next to `PuzzleBoy`, then searches Steam. A player can copy the eight bundles it reads there and uninstall Nocturne. The release archives still ship no Atlus data.
 
+## Decisions (2026.10.15)
+
+- **This port plays the original's 20 stages, and nothing else.** `OriginalStageOrder` replaces `PlayOrder.Files` in the game, and `GameAssets` loads only those files. The C switch, the switch's controls bar and PageUp/PageDown go. PageUp/PageDown predate M4 as a developer shortcut in v0.1.0, but the original has no stage skip, so it goes too. After stage 20 the board stays cleared, as in v0.1.0.
+- **Every key read as a press is in one table.** `PuzzleBoyGame.Presses` lists them, and `Pressed` throws on any other key. A test pins the table and the direction table. Held keys (the directions and Escape) are read directly, as before, so a key read that way is outside what the tests see.
+- **The game-data guard skips submodules.** `git ls-files` lists the engine submodule as a directory, which stopped the check. The engine repo runs the same check on its own files. The positive control now adds a submodule to every scratch repo.
+- **The presentation is shared, not copied** (the owner's request: Community Edition gets a Classic Nocturne theme built from this port's own code). Bundle reading moves to the engine's `PuzzleBoy.Nocturne` and the board, Jack, camera, move timing and sound to its `PuzzleBoy.Rendering`, verbatim but for namespace, visibility and citations. The HUD, dialogue, menu, `TextRenderer`, `GameAssets`, `OriginalStageOrder` and the tick loop stay here. `PuzzleBoy.Nocturne` uses MonoGame for its math types only, since its records carry them. See M6.
+- **CI checks the engine out from GitHub.** `.gitmodules` names `https://github.com/hazeliscoding/puzzle-boy-engine.git`, public since 2026.10.15. To try unpushed engine work, a local clone can point the submodule at a local engine checkout in `.git/config` (AGENTS.md, Commands).
+
 ## M0 findings (2026.10.14)
 
 Read from the decompiled game code through REA. Seven readers each covered one area, and an adversarial reviewer per area re-checked every claim against the pseudocode: 111 claims, 97 confirmed, 10 refuted or corrected, 4 left uncertain. Only the confirmed and corrected claims are recorded here. The IDs are short REA Evidence IDs; the pseudocode and the full results stay in `re/`.
@@ -238,20 +246,66 @@ The stage files the original ships but never plays, after stage 20. See the deci
 
 **Done when** every bonus stage that ships has a solution that clears it in the port, and the switch's rules have tests.
 
+## M5: Split into three repos (done 2026.10.15)
+
+This repo goes back to being a faithful preservation port of the original 20 stages. The rules move to a shared engine, and everything the original never had moves to Community Edition, the minigame expanded, which plays out of the box with its own Default theme and in the original's look with the player's own copy.
+
+- **Three peer repos** in one local folder: `puzzle-boy-engine` (the headless rules, `PuzzleBoy.Rules`), `puzzle-boy` (this repo) and `puzzle-boy-community`. Both games use the engine as a pinned git submodule at `external/puzzle-boy-engine`, with project references to its source. No NuGet feed, and no floating `main`: an engine change is committed there first, then each consumer bumps its pin.
+- **Ownership.** The original 20-file order stays here. The 23-file bonus order, the switch key and stage skipping move to Community, which can import the bonus stages from the player's own install. `Board.Switch()` stays in the engine; this port no longer calls it. The M4 research and its record above stay as they are.
+- **Baseline** (observed, before any change): HEAD `410fc89`, tags `v0.1.0` and `v0.2.0`, local tag `pre-split-baseline` on `410fc89`. Build clean, 164 tests pass, format clean, and the no-game-data check and its positive control pass. `PlayOrder.Files` is `2, 4, 32, 8, 38, 36, 37, 48, 42, 49, 40, 20, 22, 13, 21, 24, 14, 10, 25, 26`; `PlayOrder.Bonus` is `1, 30, 31, 0, 3, 9, 35, 43, 5, 6, 33, 7, 19, 47, 39, 41, 45, 34, 12, 46, 15, 11, 44`. `re/` is local and untouched.
+- The split happens on the `split/three-repos` branch. The owner published the engine and Community repos and pushed this branch as draft PR #3 on 2026.10.15; it isn't merged into `main`.
+
+- [x] Extract the rules into `puzzle-boy-engine`, with their tests.
+  - The engine holds `PuzzleBoy.Rules` and 86 of the 164 tests (the Cell, Goal, LastMove, Pushing, Stage, Switch, Swivel, Undo and Walking tests), unchanged but for their namespace. `PlayOrder` isn't in the engine. The engine adds a stage authoring API and has 202 tests.
+- [x] Depend on the pinned engine and restore the original 20-stage campaign: no bonus stages, no switch key, no stage skipping.
+  - The submodule is pinned at engine `99eaf06`, and `src/PuzzleBoy.Rules` is gone. 78 tests stayed here after the move. The bonus-order test gave way to 10 new ones, for 87.
+  - Tests prove the order is exactly the 20 documented files, each once, with none of the 23 bonus files; that `GameAssets` loads only those 20 from a bundle holding all 50; that the game never references `Board.Switch` (a metadata scan, with `Board.Step` as the positive control); and that no switch or skip key is in the table of pressed keys or the direction table. Adding a `Board.Switch` call, or adding PageDown to either table, fails them.
+  - `Hud.cs` is back to v0.1.0, and `PuzzleBoyGame.cs` differs from v0.1.0 only by the key table and the removed skip.
+- [x] Update the docs to tell the preservation port apart from Community Edition.
+  - README, AGENTS.md and the docs. `docs/bonus-stages.md` stays as history, with a note that bonus play moved to Community Edition.
+- [x] CI passes on GitHub: PR #3's CI at `01d2018` (run 38757831224: build, tests, format, the guard and its positive control), and the release workflow, run by hand on that commit, started each archive on Windows, Linux and macOS and reached the missing-game message (run 38757945948). No tag, so nothing was published.
+
+**Done when** this repo builds and tests against the pinned engine, plays exactly the 20 original stages, and passes every CI gate including the no-game-data check.
+
+**Done:** on GitHub (runs above), the build has no warnings, 51 tests pass (87 at the split, then 36 moved to the engine in M6), format is clean, and the no-game-data check and its positive control pass. Playing the 20 stages from the owner's install hasn't been repeated since the split.
+
+## M6: Shared presentation (done 2026.10.15)
+
+Community Edition's Classic theme draws the original with this port's code, so that code moves to the engine, where both games use it. Nothing about what this port shows, or when, may change.
+
+- [x] Move bundle reading to the engine's `PuzzleBoy.Nocturne`: `GameInstall` and its `.Text` and `.Character` parts, `UnityFormats`, `TextureDecoder`, and `FontGlyph`, `FontData` and `TextMaterial` out of `TextRenderer.cs`, since `ReadText` builds them.
+- [x] Move drawing, sound and timing to the engine's `PuzzleBoy.Rendering`: `BoardView`, `CharacterView`, `CharacterModel`, `ViewCamera`, `MoveAnimation` and `Sounds`.
+- [x] Use both here, pinned at engine `03ee710`, and delete the copies.
+  - Evidence (observed): each moved file diffed against `c3b0382`, the last commit before the move. 12 files, 1,889 lines; 34 lines changed and 4 `using PuzzleBoy.Nocturne;` lines added. Every change is the namespace, `internal` to `public` on a type or member a game uses, or an "M3 findings" citation now naming puzzle-boy's `ROADMAP.md`. No statement, constant or expression changed.
+  - 36 of the 87 tests moved with the code: Nocturne 19 (GameInstall 2, SoundData 1, TextureDecoder 4, UnityFormats 11, and TextRendererTests' TextMaterial edge test), Rendering 17 (CharacterModel 6, Timing 11). 51 stay here. The `Board.Switch` scan now also reads `PuzzleBoy.Rendering.dll`.
+  - `PuzzleBoy no-game-here` prints the same missing-game message, from a debug build and from a self-contained win-x64 publish checked the way the release workflow checks it. The published package versions are unchanged: AssetsTools.NET 3.0.5, Fmod5Sharp 3.1.0, Microsoft.Bcl.Memory 9.0.20, MonoGame.Framework.DesktopGL 3.8.6, NVorbis 0.10.5.
+  - Not checked: a stage drawn from the owner's install. The code is the same, but the screen wasn't compared.
+
+**Done when** the moved code differs from this port's last copy only in namespace, visibility and citations, no test is lost, and every gate passes.
+
+## Cross-repo ledger (2026.10.15)
+
+| Repo | Role | Engine pin |
+|---|---|---|
+| [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine) | Headless rules (`PuzzleBoy.Rules`), plus reading (`PuzzleBoy.Nocturne`) and drawing (`PuzzleBoy.Rendering`) the player's own Nocturne files. Not a game. | — |
+| [puzzle-boy](https://github.com/hazeliscoding/puzzle-boy) (this repo, `split/three-repos`, draft PR #3) | The preservation port: the original 20 stages from the player's own copy. | `2a38379` |
+| [puzzle-boy-community](https://github.com/hazeliscoding/puzzle-boy-community) | The minigame expanded: new stages, editor, packs, bonus stages; Default theme bundled, Classic theme from the player's copy. | `2a38379` |
+
+Both games must pin the same engine commit. An engine change lands there first, then both bump with `build: bump engine to <short-sha>`.
+
+**Definition of done, where it stands:** the engine (E1 to E3) and this port's split (M5, M6) are done, with CI green on GitHub. This port plays only the original 20 (`The_original_order_is_exactly_the_twenty_documented_files`, `The_original_order_holds_no_bonus_file`, `The_preservation_game_never_calls_Board_Switch`, `The_preservation_game_has_no_switch_or_stage_skip_key`). Community's C1 to C4 and C6 are done and C5 (its first release) is open; its own ROADMAP has the per-platform table. Still open: merging PR #3 (the owner's call), replaying the 20 stages from the owner's install since the split, signing, and hand-play on macOS and Linux.
+
 ## Later
 
-- A stage editor. The original ships a developer editor (`pbEdit`).
-- Custom stage packs.
 - Discord Rich Presence: the stage you're on ("Stage 7 of 20") and time played, with a setting to turn it off. Needs a Discord application, whose name and image come from the brand (no Atlus art), and an MIT client library such as DiscordRichPresence. It does nothing when Discord isn't running.
 - An Android build. MonoGame targets Android, and the rules library carries over as is. A phone has no Steam install, so the player copies the few bundles Puzzle Boy reads from their PC install (about 85 MB, most of it `common`) and picks them in the app. Needs touch controls: swipe to move, buttons to turn the view.
-- A fifth □ menu item, Bonus, that jumps to the bonus stages. Its label has no text in the game's tables.
-- The seven unsettled stage files (16, 17, 18, 23, 27, 28 and 29), if a stronger search or a person finds a solution that clears the port.
 
 ## Not planned
 
 - Shipping or downloading any Atlus asset.
 - Circumventing Denuvo, patching the original game or modding it.
 - Nocturne's other minigames.
+- Anything the original lacks: bonus stages, a switch key, stage skipping, a stage editor, custom stage packs, and the original's unused fifth □ menu item, Bonus, whose label has no text in the game's tables. They belong to Community Edition (M5), along with the seven unsettled stage files.
 
 ## How we'll know it works
 

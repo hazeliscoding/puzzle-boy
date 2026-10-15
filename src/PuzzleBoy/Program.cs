@@ -1,4 +1,5 @@
 using PuzzleBoy;
+using PuzzleBoy.Nocturne;
 
 // shortcut: a missing game is reported on stderr before any window opens; an in-game message needs the fonts M3 brings.
 // The bundles copied beside the executable come first, so a double-click works with the game uninstalled.

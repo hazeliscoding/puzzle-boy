@@ -13,6 +13,9 @@ expect() {
     mkdir -p "$repo/$(dirname "$path")"
     printf '%b' "$content" > "$repo/$path"
     git -C "$repo" add -A
+    # Every scratch repo also holds a submodule, as the real one does; the check must skip it, not stop on it.
+    mkdir -p "$repo/external/engine"
+    git -C "$repo" update-index --add --cacheinfo "160000,$(printf '%040d' 1),external/engine"
     if "$check" "$repo" > /dev/null; then actual=pass; else actual=fail; fi
     rm -rf "$repo"
     if [ "$actual" = "$outcome" ]; then

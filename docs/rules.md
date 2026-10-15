@@ -3,7 +3,7 @@
 > [!TIP]
 > **TL;DR:** A stage is an 828-byte file with a 20×20 grid. Each move is checked in a fixed order: the goal, then bumps, then whatever is in the next cell. Blocks move one cell as a group, fall when every cell is over a hole, and never push other blocks. Swivels turn a quarter. Undo remembers the last 30 pushes and turns, and plain walking is never recorded.
 
-**Read time:** 5 minutes · **Code:** `src/PuzzleBoy.Rules`
+**Read time:** 5 minutes · **Code:** `PuzzleBoy.Rules`, in the engine submodule `external/puzzle-boy-engine`
 
 ## The stage file
 
@@ -78,7 +78,7 @@ flowchart TD
 
 - A character that reaches the goal while others are still out is hidden, and control passes to the next visible slot, in ascending order.
 - The last one to arrive clears the stage. Input locks, the undo history is wiped, and the next stage loads.
-- **The switch is the port's addition.** The original only passes control on a goal arrival. The C key passes it the same way at any time, so the unused multi-character stages can be finished. See [Bonus stages](bonus-stages.md).
+- **The switch is the engine's addition, and this port doesn't use it.** The original only passes control on a goal arrival. `Board.Switch` passes it the same way at any time, so Community Edition can finish the unused multi-character stages. This port, like the original, has no switch key. See [Bonus stages](bonus-stages.md).
 
 ## Undo and retry
 
@@ -96,7 +96,7 @@ None of these can show up in a stage the original plays.
 | The two-cell swivel step compares group ids only | Counts only the swivel's own cells | Avoids matching floor if a swivel used group 0 |
 | A swivel turn past the grid's edge would crash | Refuses the turn | No shipped swivel touches the edge |
 | Undo stores only what changed | Undo stores a full copy | Simpler, with the same results |
-| No way to switch characters | C switches | Six multi-character stages need it |
+| No way to switch characters | The engine has `Board.Switch`; this port never calls it | Community Edition's multi-character stages need it |
 
 ## Rules as drawings
 
@@ -113,6 +113,8 @@ Only character 2 can push `a` down into the hole, and character 1 can't get to t
 
 ## Where to look
 
+All in the engine submodule, `external/puzzle-boy-engine`:
+
 - `src/PuzzleBoy.Rules/Stage.cs`, `Cell` and `CellKind`: the file format.
 - `src/PuzzleBoy.Rules/Board.cs`: every rule above.
-- `tests/PuzzleBoy.Tests/*Tests.cs`: one drawing per rule. `Ascii.cs` explains the legend.
+- `tests/PuzzleBoy.Rules.Tests/*Tests.cs`: one drawing per rule. `Ascii.cs` explains the legend.

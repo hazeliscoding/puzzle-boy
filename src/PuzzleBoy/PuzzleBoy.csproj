@@ -12,16 +12,15 @@
     <EmbeddedResource Include="Icon.bmp" LogicalName="Icon.bmp" />
   </ItemGroup>
 
-  <!-- No MonoGame content pipeline: every asset is read from the player's install at runtime. -->
+  <!-- No MonoGame content pipeline: every asset is read from the player's install at runtime, through the engine's PuzzleBoy.Nocturne. -->
   <ItemGroup>
-    <PackageReference Include="AssetsTools.NET" />
-    <PackageReference Include="Fmod5Sharp" />
     <PackageReference Include="MonoGame.Framework.DesktopGL" />
-    <PackageReference Include="NVorbis" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PuzzleBoy.Rules\PuzzleBoy.Rules.csproj" />
+    <ProjectReference Include="..\..\external\puzzle-boy-engine\src\PuzzleBoy.Nocturne\PuzzleBoy.Nocturne.csproj" />
+    <ProjectReference Include="..\..\external\puzzle-boy-engine\src\PuzzleBoy.Rendering\PuzzleBoy.Rendering.csproj" />
+    <ProjectReference Include="..\..\external\puzzle-boy-engine\src\PuzzleBoy.Rules\PuzzleBoy.Rules.csproj" />
   </ItemGroup>
 
   <ItemGroup>
