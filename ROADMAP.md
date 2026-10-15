@@ -278,7 +278,7 @@ This repo goes back to being a faithful preservation port of the original 20 sta
 - Shipping or downloading any Atlus asset.
 - Circumventing Denuvo, patching the original game or modding it.
 - Nocturne's other minigames.
-- Anything the original lacks: bonus stages, a switch key, stage skipping, a stage editor and custom stage packs. They belong to Community Edition (M5), along with the seven unsettled stage files.
+- Anything the original lacks: bonus stages, a switch key, stage skipping, a stage editor, custom stage packs, and the original's unused fifth □ menu item, Bonus, whose label has no text in the game's tables. They belong to Community Edition (M5), along with the seven unsettled stage files.
 
 ## How we'll know it works
 
