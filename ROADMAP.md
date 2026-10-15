@@ -49,6 +49,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **This port plays the original's 20 stages, and nothing else.** `OriginalStageOrder` replaces `PlayOrder.Files` in the game, and `GameAssets` loads only those files. The C switch, the switch's controls bar and PageUp/PageDown go. PageUp/PageDown predate M4 as a developer shortcut in v0.1.0, but the original has no stage skip, so it goes too. After stage 20 the board stays cleared, as in v0.1.0.
 - **Every key read as a press is in one table.** `PuzzleBoyGame.Presses` lists them, and `Pressed` throws on any other key. A test pins the table and the direction table. Held keys (the directions and Escape) are read directly, as before, so a key read that way is outside what the tests see.
 - **The game-data guard skips submodules.** `git ls-files` lists the engine submodule as a directory, which stopped the check. The engine repo runs the same check on its own files. The positive control now adds a submodule to every scratch repo.
+- **The presentation is shared, not copied** (the owner's request: Community Edition gets a Classic Nocturne theme built from this port's own code). Bundle reading moves to the engine's `PuzzleBoy.Nocturne` and the board, Jack, camera, move timing and sound to its `PuzzleBoy.Rendering`, verbatim but for namespace, visibility and citations. The HUD, dialogue, menu, `TextRenderer`, `GameAssets`, `OriginalStageOrder` and the tick loop stay here. `PuzzleBoy.Nocturne` uses MonoGame for its math types only, since its records carry them. See M6.
 - **CI needs the engine on GitHub.** `.gitmodules` names `https://github.com/hazeliscoding/puzzle-boy-engine.git`, which isn't published yet, so CI here can't check out until it is. Local clones override the URL in `.git/config` (AGENTS.md, Commands).
 
 ## M0 findings (2026.10.14)
@@ -267,6 +268,20 @@ This repo goes back to being a faithful preservation port of the original 20 sta
 **Done when** this repo builds and tests against the pinned engine, plays exactly the 20 original stages, and passes every CI gate including the no-game-data check.
 
 **Done:** against engine `99eaf06`, the build has no warnings, 87 tests pass, format is clean, and the no-game-data check and its positive control pass. A fresh local clone with the submodule URL overridden builds and passes too. Not yet run on GitHub, since the engine isn't published. Playing the 20 stages from the owner's install hasn't been repeated since the split.
+
+## M6: Shared presentation (done 2026.10.15)
+
+Community Edition's Classic theme draws the original with this port's code, so that code moves to the engine, where both games use it. Nothing about what this port shows, or when, may change.
+
+- [x] Move bundle reading to the engine's `PuzzleBoy.Nocturne`: `GameInstall` and its `.Text` and `.Character` parts, `UnityFormats`, `TextureDecoder`, and `FontGlyph`, `FontData` and `TextMaterial` out of `TextRenderer.cs`, since `ReadText` builds them.
+- [x] Move drawing, sound and timing to the engine's `PuzzleBoy.Rendering`: `BoardView`, `CharacterView`, `CharacterModel`, `ViewCamera`, `MoveAnimation` and `Sounds`.
+- [x] Use both here, pinned at engine `03ee710`, and delete the copies.
+  - Evidence (observed): each moved file diffed against `c3b0382`, the last commit before the move. 12 files, 1,889 lines; 34 lines changed and 4 `using PuzzleBoy.Nocturne;` lines added. Every change is the namespace, `internal` to `public` on a type or member a game uses, or an "M3 findings" citation now naming puzzle-boy's `ROADMAP.md`. No statement, constant or expression changed.
+  - 36 of the 87 tests moved with the code: Nocturne 19 (GameInstall 2, SoundData 1, TextureDecoder 4, UnityFormats 11, and TextRendererTests' TextMaterial edge test), Rendering 17 (CharacterModel 6, Timing 11). 51 stay here. The `Board.Switch` scan now also reads `PuzzleBoy.Rendering.dll`.
+  - `PuzzleBoy no-game-here` prints the same missing-game message, from a debug build and from a self-contained win-x64 publish checked the way the release workflow checks it. The published package versions are unchanged: AssetsTools.NET 3.0.5, Fmod5Sharp 3.1.0, Microsoft.Bcl.Memory 9.0.20, MonoGame.Framework.DesktopGL 3.8.6, NVorbis 0.10.5.
+  - Not checked: a stage drawn from the owner's install. The code is the same, but the screen wasn't compared.
+
+**Done when** the moved code differs from this port's last copy only in namespace, visibility and citations, no test is lost, and every gate passes.
 
 ## Later
 

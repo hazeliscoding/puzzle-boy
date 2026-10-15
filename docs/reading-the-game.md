@@ -3,7 +3,7 @@
 > [!TIP]
 > **TL;DR:** The port finds your Steam install, opens the game's Unity bundles with AssetsTools.NET, and decodes everything itself: stage files, DXT1 textures, FMOD Vorbis audio, Jack's skinned model and animation curves, the text tables and a distance-field font. It all happens once at startup, in about 2 seconds, and nothing is ever written back.
 
-**Read time:** 5 minutes · **Code:** `GameInstall*.cs`, `GameAssets.cs`, `TextureDecoder.cs`, `UnityFormats.cs`
+**Read time:** 5 minutes · **Code:** `GameAssets.cs`, and `GameInstall*.cs`, `TextureDecoder.cs` and `UnityFormats.cs` in the engine's `PuzzleBoy.Nocturne`
 
 ## From your install to the screen
 
@@ -79,6 +79,6 @@ flowchart LR
 
 ## Where to look
 
-- `GameInstall.cs`: finding the install, opening bundles, textures and sounds.
-- `GameInstall.Character.cs` and `GameInstall.Text.cs`: Jack, the text and the font.
+- `GameInstall.cs` (engine, `PuzzleBoy.Nocturne`): finding the install, opening bundles, textures and sounds.
+- `GameInstall.Character.cs` and `GameInstall.Text.cs` (engine, `PuzzleBoy.Nocturne`): Jack, the text and the font.
 - `GameAssets.Read`: everything read at startup, in one place.

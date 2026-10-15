@@ -3,7 +3,7 @@
 > [!TIP]
 > **TL;DR:** The port runs at the original's 30 ticks a second, measured from gameplay video. A step takes 4 ticks, a push or a turn 5, and a fall 9. Input is read once per tick in a fixed order, and never while a move plays. The camera follows Jack, turns 90° at a time, and keys always follow the view.
 
-**Read time:** 4 minutes · **Code:** `PuzzleBoyGame.cs`, `ViewCamera.cs`, `MoveAnimation.cs`
+**Read time:** 4 minutes · **Code:** `PuzzleBoyGame.cs`, and `ViewCamera.cs` and `MoveAnimation.cs` in the engine's `PuzzleBoy.Rendering`
 
 ## Where 30 ticks a second comes from
 
