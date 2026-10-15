@@ -8,8 +8,7 @@ namespace PuzzleBoy;
 /// <summary>
 /// The game window: plays the original's stages in order with its tick rate, move timing, follow camera and board look
 /// (ROADMAP.md, "M3 findings"). Arrow keys or WASD move, Q and E turn the view (L1/R1), V switches to overhead (○),
-/// Tab scrolls (△), C switches characters, F opens the menu (□), Enter or Space confirms, Backspace cancels,
-/// PageUp/PageDown skip stages, Escape quits.
+/// Tab scrolls (△), F opens the menu (□), Enter or Space confirms, Backspace cancels, Escape quits.
 /// </summary>
 public sealed class PuzzleBoyGame : Game
 {
@@ -33,6 +32,10 @@ public sealed class PuzzleBoyGame : Game
         (Keys.Left, 3), (Keys.A, 3),
         (Keys.Right, 1), (Keys.D, 1),
     ];
+
+    // Every key the game reads as a press; Pressed refuses any other, so a test can see the whole set. The port's
+    // switch (C) and stage skipping (PageUp/PageDown) belong to Community Edition, not to this port.
+    internal static readonly Keys[] Presses = [Keys.Tab, Keys.V, Keys.Q, Keys.E, Keys.F, Keys.Enter, Keys.Space, Keys.Back];
 
     private readonly GameAssets _assets;
     private readonly ViewCamera _camera = new();
@@ -166,12 +169,6 @@ public sealed class PuzzleBoyGame : Game
             Play(keys);
         }
 
-        // PageUp and PageDown skip stages, so the bonus stages don't need 20 stages played first.
-        if (Pressed(keys, Keys.PageDown) || Pressed(keys, Keys.PageUp))
-        {
-            Load((_current + (Pressed(keys, Keys.PageDown) ? 1 : _assets.Stages.Count - 1)) % _assets.Stages.Count);
-        }
-
         UpdateTitle();
         _previousKeys = keys;
         base.Update(gameTime);
@@ -189,7 +186,7 @@ public sealed class PuzzleBoyGame : Game
         // COMPLETE! shows from the clear's first tick, the one after the last move ends, for 30 ticks.
         var clear = _board.IsCleared && _clearedFor is >= 4 and < 34;
         // The controls bar hides while the Manikin Kid talks and shows the menu's or help's keys while they're up.
-        var bar = _dialogue is not null ? BarSet.None : _helpOpen ? BarSet.Help : _menuOpen ? BarSet.Menu : _scroll is not null ? BarSet.Scroll : _board.Characters.Count(c => c.Visible) > 1 ? BarSet.Switch : BarSet.Play;
+        var bar = _dialogue is not null ? BarSet.None : _helpOpen ? BarSet.Help : _menuOpen ? BarSet.Menu : _scroll is null ? BarSet.Play : BarSet.Scroll;
         _hud.Draw(new HudState(_current + 1, clear, _undoTicks > 0, ScrollArrows(), _scrollTicks, bar, _barTicks));
         if (_menuOpen)
         {
@@ -230,7 +227,7 @@ public sealed class PuzzleBoyGame : Game
         _lock = StartLock;
     }
 
-    /// <summary>One tick of input, read in the original's order: △, ○, the directions, then L1/R1; the port's switch and □ last.</summary>
+    /// <summary>One tick of input, read in the original's order: △, ○, the directions, then L1/R1.</summary>
     private void Play(KeyboardState keys)
     {
         // shortcut: scroll mode draws no direction arrows yet; they're pzlUI sprites and come with the HUD.
@@ -278,13 +275,6 @@ public sealed class PuzzleBoyGame : Game
         }
 
         if ((Pressed(keys, Keys.Q) && _camera.TurnLeft()) || (Pressed(keys, Keys.E) && _camera.TurnRight()))
-        {
-            _sounds.Play(8);
-        }
-
-        // The port's switch, which the original lacks (ROADMAP.md, M4). Its sound is the view change's, since the camera
-        // moves to the new character.
-        if (Pressed(keys, Keys.C) && _animation is null && _scroll is null && _board.Switch())
         {
             _sounds.Play(8);
         }
@@ -442,7 +432,9 @@ public sealed class PuzzleBoyGame : Game
         return posed;
     }
 
-    private bool Pressed(KeyboardState keys, Keys key) => keys.IsKeyDown(key) && _previousKeys.IsKeyUp(key);
+    private bool Pressed(KeyboardState keys, Keys key) => Array.IndexOf(Presses, key) >= 0
+        ? keys.IsKeyDown(key) && _previousKeys.IsKeyUp(key)
+        : throw new ArgumentOutOfRangeException(nameof(key), key, "Not one of the keys in Presses.");
 
     private void UpdateTitle()
     {

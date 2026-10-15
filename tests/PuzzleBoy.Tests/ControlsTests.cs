@@ -44,5 +44,22 @@ public sealed class ControlsTests
         Assert.Equal([0, 0, 2, 2, 3, 3, 1, 1], PuzzleBoyGame.Moves.Select(m => m.Screen));
     }
 
+    [Fact]
+    public void The_game_reads_only_the_original_keys_and_the_menu_keys_as_presses()
+    {
+        Assert.Equal([Keys.Tab, Keys.V, Keys.Q, Keys.E, Keys.F, Keys.Enter, Keys.Space, Keys.Back], PuzzleBoyGame.Presses);
+    }
+
+    // The switch and stage skipping are Community Edition's; the original has neither.
+    [Theory]
+    [InlineData(Keys.C)]
+    [InlineData(Keys.PageUp)]
+    [InlineData(Keys.PageDown)]
+    public void The_preservation_game_has_no_switch_or_stage_skip_key(Keys key)
+    {
+        Assert.DoesNotContain(key, PuzzleBoyGame.Presses);
+        Assert.DoesNotContain(key, PuzzleBoyGame.Moves.Select(m => m.Key));
+    }
+
     private static int ScreenOf(Keys key) => Assert.Single(PuzzleBoyGame.Moves, m => m.Key == key).Screen;
 }
