@@ -50,7 +50,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **Every key read as a press is in one table.** `PuzzleBoyGame.Presses` lists them, and `Pressed` throws on any other key. A test pins the table and the direction table. Held keys (the directions and Escape) are read directly, as before, so a key read that way is outside what the tests see.
 - **The game-data guard skips submodules.** `git ls-files` lists the engine submodule as a directory, which stopped the check. The engine repo runs the same check on its own files. The positive control now adds a submodule to every scratch repo.
 - **The presentation is shared, not copied** (the owner's request: Community Edition gets a Classic Nocturne theme built from this port's own code). Bundle reading moves to the engine's `PuzzleBoy.Nocturne` and the board, Jack, camera, move timing and sound to its `PuzzleBoy.Rendering`, verbatim but for namespace, visibility and citations. The HUD, dialogue, menu, `TextRenderer`, `GameAssets`, `OriginalStageOrder` and the tick loop stay here. `PuzzleBoy.Nocturne` uses MonoGame for its math types only, since its records carry them. See M6.
-- **CI needs the engine on GitHub.** `.gitmodules` names `https://github.com/hazeliscoding/puzzle-boy-engine.git`, which isn't published yet, so CI here can't check out until it is. Local clones override the URL in `.git/config` (AGENTS.md, Commands).
+- **CI checks the engine out from GitHub.** `.gitmodules` names `https://github.com/hazeliscoding/puzzle-boy-engine.git`, public since 2026.10.15. To try unpushed engine work, a local clone can point the submodule at a local engine checkout in `.git/config` (AGENTS.md, Commands).
 
 ## M0 findings (2026.10.14)
 
@@ -246,14 +246,14 @@ The stage files the original ships but never plays, after stage 20. See the deci
 
 **Done when** every bonus stage that ships has a solution that clears it in the port, and the switch's rules have tests.
 
-## M5: Split into three repos (local gates pass 2026.10.15; CI waits on the engine's publication)
+## M5: Split into three repos (done 2026.10.15)
 
-This repo goes back to being a faithful preservation port of the original 20 stages. The rules move to a shared engine, and everything the original never had moves to a standalone Community Edition that needs no Nocturne.
+This repo goes back to being a faithful preservation port of the original 20 stages. The rules move to a shared engine, and everything the original never had moves to Community Edition, the minigame expanded, which plays out of the box with its own Default theme and in the original's look with the player's own copy.
 
 - **Three peer repos** in one local folder: `puzzle-boy-engine` (the headless rules, `PuzzleBoy.Rules`), `puzzle-boy` (this repo) and `puzzle-boy-community`. Both games use the engine as a pinned git submodule at `external/puzzle-boy-engine`, with project references to its source. No NuGet feed, and no floating `main`: an engine change is committed there first, then each consumer bumps its pin.
 - **Ownership.** The original 20-file order stays here. The 23-file bonus order, the switch key and stage skipping move to Community, which can import the bonus stages from the player's own install. `Board.Switch()` stays in the engine; this port no longer calls it. The M4 research and its record above stay as they are.
 - **Baseline** (observed, before any change): HEAD `410fc89`, tags `v0.1.0` and `v0.2.0`, local tag `pre-split-baseline` on `410fc89`. Build clean, 164 tests pass, format clean, and the no-game-data check and its positive control pass. `PlayOrder.Files` is `2, 4, 32, 8, 38, 36, 37, 48, 42, 49, 40, 20, 22, 13, 21, 24, 14, 10, 25, 26`; `PlayOrder.Bonus` is `1, 30, 31, 0, 3, 9, 35, 43, 5, 6, 33, 7, 19, 47, 39, 41, 45, 34, 12, 46, 15, 11, 44`. `re/` is local and untouched.
-- The split happens on the `split/three-repos` branch. Nothing is pushed and no GitHub repo is created until the owner says so.
+- The split happens on the `split/three-repos` branch. The owner published the engine and Community repos and pushed this branch as draft PR #3 on 2026.10.15; it isn't merged into `main`.
 
 - [x] Extract the rules into `puzzle-boy-engine`, with their tests.
   - The engine holds `PuzzleBoy.Rules` and 86 of the 164 tests (the Cell, Goal, LastMove, Pushing, Stage, Switch, Swivel, Undo and Walking tests), unchanged but for their namespace. `PlayOrder` isn't in the engine. The engine adds a stage authoring API and has 202 tests.
@@ -263,11 +263,11 @@ This repo goes back to being a faithful preservation port of the original 20 sta
   - `Hud.cs` is back to v0.1.0, and `PuzzleBoyGame.cs` differs from v0.1.0 only by the key table and the removed skip.
 - [x] Update the docs to tell the preservation port apart from Community Edition.
   - README, AGENTS.md and the docs. `docs/bonus-stages.md` stays as history, with a note that bonus play moved to Community Edition.
-- [ ] CI passes on GitHub once the engine is published.
+- [x] CI passes on GitHub: PR #3's CI at `01d2018` (run 38757831224: build, tests, format, the guard and its positive control), and the release workflow, run by hand on that commit, started each archive on Windows, Linux and macOS and reached the missing-game message (run 38757945948). No tag, so nothing was published.
 
 **Done when** this repo builds and tests against the pinned engine, plays exactly the 20 original stages, and passes every CI gate including the no-game-data check.
 
-**Done:** against engine `99eaf06`, the build has no warnings, 87 tests pass, format is clean, and the no-game-data check and its positive control pass. A fresh local clone with the submodule URL overridden builds and passes too. Not yet run on GitHub, since the engine isn't published. Playing the 20 stages from the owner's install hasn't been repeated since the split.
+**Done:** on GitHub (runs above), the build has no warnings, 51 tests pass (87 at the split, then 36 moved to the engine in M6), format is clean, and the no-game-data check and its positive control pass. Playing the 20 stages from the owner's install hasn't been repeated since the split.
 
 ## M6: Shared presentation (done 2026.10.15)
 

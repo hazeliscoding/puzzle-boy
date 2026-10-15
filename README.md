@@ -16,7 +16,7 @@ In Nocturne, Puzzle Boy sits deep inside a long RPG. You guide Jack-o'-Lantern t
 
 This project rebuilds the minigame so it runs on its own on Windows, macOS and Linux, as a record of how the original plays. It reads the stages, text and sounds from your own copy of *Shin Megami Tensei III Nocturne HD Remaster*.
 
-> **Want to play without Nocturne?** [Puzzle Boy Community Edition](https://github.com/hazeliscoding/puzzle-boy-community) is a separate game on the same rules, with its own stages and art. It installs and plays on its own, with no copy of Nocturne. It isn't published yet.
+> **Want more than the original 20?** [Puzzle Boy Community Edition](https://github.com/hazeliscoding/puzzle-boy-community) is the Nocturne minigame expanded: new stages, a level editor, level packs, and the bonus stages and switch key that v0.2.0 had. Its Classic theme comes from your own copy of Nocturne, and without one it plays out of the box with its bundled Default theme. It has no release yet.
 
 > **Status:** early development. The original's rules are decoded and implemented, and all 20 stages can be played from your install with the original's board look, camera, timing, sound, HUD, dialogue, menu and an animated Jack-o'-Lantern. Solutions recorded in the original clear every stage in the port. See [ROADMAP.md](ROADMAP.md).
 
@@ -38,7 +38,7 @@ The builds aren't signed, so Windows SmartScreen and macOS Gatekeeper may warn b
 - The 50 stage files in the game's `pazzleboy` asset bundle are small binary grids. Their format is decoded and recorded in the roadmap.
 - The rules come from static analysis of the game's code with [REA](https://rea.tools) and Ghidra. The analysis reads only the game's unprotected code and does not bypass its anti-tamper protection.
 - Each rule becomes a test on a handmade stage, and the game is written from those tests, never from decompiler output.
-- The rules live in [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine), which Community Edition shares. This repo pins it as a git submodule, so clone with `--recurse-submodules`. The engine isn't published yet either.
+- The rules live in [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine), which Community Edition shares. This repo pins it as a git submodule, so clone with `--recurse-submodules`.
 - [The docs](docs/README.md) walk through all of it, a few minutes per topic: the journey, the architecture, the rules, the timing, reading the game's files, the rendering, the bonus stages (now in Community Edition) and the checks.
 
 ## License

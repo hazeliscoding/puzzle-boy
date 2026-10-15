@@ -25,7 +25,7 @@ These are the working rules for agents in this repo. Puzzle Boy is a faithful, c
 
 ## Commands
 
-- `git submodule update --init` fetches the rules engine into `external/puzzle-boy-engine`. Until the engine is on GitHub, point the submodule at a local clone first: `git config submodule.external/puzzle-boy-engine.url <path to puzzle-boy-engine>`, then `git -c protocol.file.allow=always submodule update --init`.
+- `git submodule update --init` fetches the engine from GitHub into `external/puzzle-boy-engine`. To work against unpushed engine commits, point the submodule at a local clone: `git config submodule.external/puzzle-boy-engine.url <path to puzzle-boy-engine>`, then `git -c protocol.file.allow=always submodule update --init`.
 - `dotnet build PuzzleBoy.slnx` builds everything. Warnings are errors.
 - `dotnet test --solution PuzzleBoy.slnx` runs the tests. They use handmade stages only and never need the game installed.
 - `dotnet format PuzzleBoy.slnx --verify-no-changes` checks the style CI will enforce.
