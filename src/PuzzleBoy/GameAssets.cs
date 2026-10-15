@@ -14,11 +14,14 @@ internal sealed record GameAssets(
     IReadOnlyList<(int File, Stage Stage)> Stages, TextureData Atlas, TextureData Background,
     IReadOnlyDictionary<string, SoundData> Sounds, CharacterData Character, UiSheets Ui, TextData Text)
 {
+    /// <summary>The M4 bonus files played after stage 20; removed in the next commit, which restores the original 20.</summary>
+    internal static IReadOnlyList<int> Bonus { get; } = [1, 30, 31, 0, 3, 9, 35, 43, 5, 6, 33, 7, 19, 47, 39, 41, 45, 34, 12, 46, 15, 11, 44];
+
     /// <summary>Reads every asset, opening each bundle once; <c>common</c> is large and slow to unpack.</summary>
     public static GameAssets Read(GameInstall install)
     {
         var text = install.ReadTextAssets("pazzleboy");
-        var stages = PlayOrder.Files.Concat(PlayOrder.Bonus).Select(file => (file, Stage.Parse(text[PlayOrder.AssetName(file)]))).ToList();
+        var stages = OriginalStageOrder.Files.Concat(Bonus).Select(file => (file, Stage.Parse(text[OriginalStageOrder.AssetName(file)]))).ToList();
         var common = install.ReadTextures("common", "BG_pzl", "tone2", "pzlUI01", "pzlUI_font01_ja", "talkUI01");
         var english = install.ReadTextures("ui_tex_en", "pzlUI_font01_en", "buttonUI01_en_common");
         return new GameAssets(
