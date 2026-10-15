@@ -1,9 +1,12 @@
 # Bonus stages
 
+> [!NOTE]
+> **History.** This page records M4, which shipped in v0.2.0. Since the split into three repos, this port plays only the original 20 stages, with no switch key and no stage skipping. Bonus play lives in [Puzzle Boy Community Edition](https://github.com/hazeliscoding/puzzle-boy-community), which imports these stages from the player's own install. `Board.Switch` stays in the shared engine. The paths below are as of v0.2.0.
+
 > [!TIP]
 > **TL;DR:** The game ships 50 stage files and plays 20. In the port, 23 of the other 30 come after stage 20: every one with a solution that clears the port. Six of the seven stages with several Jack-o'-Lanterns can't be finished under the original's rules, because only the first character can move until it reaches the goal. The port adds a switch key, C, and with it four of them can be won.
 
-**Read time:** 4 minutes · **Status:** M4, done · **Code:** `PlayOrder.Bonus`, `Board.Switch`
+**Read time:** 4 minutes · **Status:** M4, done; moved to Community Edition in M5 · **Code:** `PlayOrder.Bonus`, `Board.Switch`
 
 ## The 50 files
 

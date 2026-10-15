@@ -54,7 +54,7 @@ stateDiagram-v2
 2. ○, overhead view (V)
 3. The directions: up, down, left, right. The first one held wins.
 4. L1 and R1, turning the view (Q and E)
-5. The port's own keys: switch (C), then □ for the menu (F)
+5. □ for the menu (F)
 
 ## The camera
 

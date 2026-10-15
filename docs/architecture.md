@@ -1,7 +1,7 @@
 # Architecture
 
 > [!TIP]
-> **TL;DR:** There are two projects. `PuzzleBoy.Rules` holds the game's logic, with no graphics and no file access, so tests drive it with plain bytes. `PuzzleBoy` is the MonoGame app: it reads everything from your install once at startup, then runs the original's 30-tick loop.
+> **TL;DR:** There are two projects, plus the engine. `PuzzleBoy.Rules` holds the game's logic, with no graphics and no file access, so tests drive it with plain bytes. It comes from [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine), a git submodule in `external/puzzle-boy-engine` that Community Edition shares. `PuzzleBoy` is the MonoGame app: it reads everything from your install once at startup, then runs the original's 30-tick loop.
 
 **Read time:** 4 minutes
 
@@ -13,17 +13,17 @@ flowchart LR
         bundles[("Unity bundles<br>stages, text, sounds,<br>textures, Jack")]
     end
     subgraph app["PuzzleBoy (MonoGame)"]
+        order["OriginalStageOrder<br>which files, in what order"] --> ga
         gi["GameInstall<br>finds and reads the bundles"] --> ga["GameAssets<br>everything, decoded once"]
         ga --> loop["PuzzleBoyGame<br>the tick loop"]
         loop --> views["BoardView, CharacterView,<br>Hud, Sounds"]
     end
-    subgraph rules["PuzzleBoy.Rules"]
+    subgraph rules["PuzzleBoy.Rules, from the engine submodule"]
         stage["Stage<br>parses 828-byte files"] --> board["Board<br>steps, pushes, swivels, undo"]
-        order["PlayOrder<br>which files, in what order"]
     end
     bundles --> gi
     ga -- "stage bytes" --> stage
-    loop -- "Step, Switch, Undo" --> board
+    loop -- "Step, Undo, Retry" --> board
 ```
 
 ## The trick that keeps it simple
@@ -65,8 +65,8 @@ sequenceDiagram
 | Type | Job |
 |---|---|
 | `Stage` | Parses a stage file, repairing the six damaged ones |
-| `Board` | The rules: steps, pushes, falls, swivels, the goal, the switch, undo and retry |
-| `PlayOrder` | The original's 20 stages, then the bonus stages |
+| `Board` | The rules: steps, pushes, falls, swivels, the goal, undo and retry. Its switch is Community Edition's; this port never calls it |
+| `OriginalStageOrder` | The original's 20 stage files, in its order |
 | `GameInstall` | Finds the Steam install and reads bundles with AssetsTools.NET |
 | `GameAssets` | Reads and decodes every asset once at startup, in about 2 seconds |
 | `PuzzleBoyGame` | The tick loop: input, menus, dialogue, stage flow |
@@ -88,5 +88,6 @@ sequenceDiagram
 ## Where to look
 
 - `src/PuzzleBoy/PuzzleBoyGame.cs`: start at `Update`, then `Play`.
-- `src/PuzzleBoy.Rules/Board.cs`: start at `Step`.
+- `external/puzzle-boy-engine/src/PuzzleBoy.Rules/Board.cs`: start at `Step`.
 - `tests/PuzzleBoy.Tests/Ascii.cs`: how tests draw stages as text.
+- `tests/PuzzleBoy.Tests/PreservationScopeTests.cs`: the checks that keep this port to the original's 20 stages.

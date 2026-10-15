@@ -20,7 +20,7 @@
 | [Timing and camera](timing-and-camera.md) | Ticks, move lengths, input order and the camera | 4 min |
 | [Reading the game](reading-the-game.md) | Bundles, textures, sound, Jack's model and the text | 5 min |
 | [Rendering and UI](rendering-and-ui.md) | The board's look, Jack, the HUD and a font drawn on the CPU | 5 min |
-| [Bonus stages](bonus-stages.md) | The 30 stages the original never plays, and the switch | 4 min |
+| [Bonus stages](bonus-stages.md) | The 30 stages the original never plays, and the switch. History: they're Community Edition's now | 4 min |
 | [Keeping it honest](keeping-it-honest.md) | Tests, replays, footage checks, CI and the guardrails | 4 min |
 
 ## How the pages connect
