@@ -1,22 +1,52 @@
-<h1>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/lockup-dark.svg">
-    <img alt="Puzzle Boy" src="docs/brand/lockup.svg" height="40">
-  </picture>
+<h1 align="center">
+  <img src="https://github.com/user-attachments/assets/4a3d0618-c3d1-49f7-9241-d0bd7fc07dc0" alt="Puzzle Boy: preservation port" width="640">
 </h1>
 
-**A faithful preservation port of the Puzzle Boy minigame from *Shin Megami Tensei III Nocturne HD Remaster*. It reads your own copy of the game and plays the original 20 stages.**
+<p align="center"><b>A faithful preservation port of the Puzzle Boy minigame from <i>Shin Megami Tensei III Nocturne HD Remaster</i>. It reads your own copy of the game and plays the original 20 stages.</b></p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/fb27b01d-3f4a-418e-ab2f-b81c402ce16c" alt="Jack-o'-Lantern turns the view, pushes blocks and clears stage 2" width="800">
-  <br><em>Rendered by the port from a local copy of the game.</em>
+  <img src="https://github.com/user-attachments/assets/ec704087-0cf0-4a34-b00e-881fbe98ff8f" alt="The Manikin Kid introduces stage 1, then Jack-o'-Lantern turns the view, switches to overhead and undoes a push from the menu in stages 2 and 3" width="800">
+  <br><em>Rendered by the port from a local copy of the game, at the original's speed.</em>
 </p>
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://github.com/user-attachments/assets/f9d80fa1-cf8b-4e6f-b6c2-f9656f4057fc"><img src="https://github.com/user-attachments/assets/f9d80fa1-cf8b-4e6f-b6c2-f9656f4057fc" alt="The Manikin Kid explains the goal before stage 1" width="100%"></a>
+      <br><sub>The Manikin Kid, before stage 1</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://github.com/user-attachments/assets/1e67d749-3bdf-4d12-b87c-5fbf93592ba4"><img src="https://github.com/user-attachments/assets/1e67d749-3bdf-4d12-b87c-5fbf93592ba4" alt="The original's menu, with UNDO taking back a push" width="100%"></a>
+      <br><sub>The □ menu and its undo</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://github.com/user-attachments/assets/db0056d3-8456-40fe-9dba-3e1dbb45ecc9"><img src="https://github.com/user-attachments/assets/db0056d3-8456-40fe-9dba-3e1dbb45ecc9" alt="COMPLETE! after the last push of a stage" width="100%"></a>
+      <br><sub>COMPLETE!</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://github.com/user-attachments/assets/b1d2c8c1-5acb-447f-ba57-c1985ae90e62"><img src="https://github.com/user-attachments/assets/b1d2c8c1-5acb-447f-ba57-c1985ae90e62" alt="Stage 5, a field of swivel blocks" width="100%"></a>
+      <br><sub>Stage 5: swivels</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://github.com/user-attachments/assets/8caa96b6-c7f4-46e3-bb60-f33d9d85666a"><img src="https://github.com/user-attachments/assets/8caa96b6-c7f4-46e3-bb60-f33d9d85666a" alt="Stage 10, with large pushable blocks" width="100%"></a>
+      <br><sub>Stage 10: big blocks</sub>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://github.com/user-attachments/assets/5e33fc24-5047-4fac-80a3-e1559a141e53"><img src="https://github.com/user-attachments/assets/5e33fc24-5047-4fac-80a3-e1559a141e53" alt="Stage 20, the last stage" width="100%"></a>
+      <br><sub>Stage 20, the last one</sub>
+    </td>
+  </tr>
+</table>
+
+<p align="center"><sub>Every image is rendered by the port from a local copy of the game and hosted as an upload; none of it is in this repository or its downloads.</sub></p>
 
 In Nocturne, Puzzle Boy sits deep inside a long RPG. You guide Jack-o'-Lantern through a maze by pushing blocks, turning swivel blocks and filling holes, while the Manikin Kid taunts you. It is a 3D take on Atlus's Game Boy puzzler of the same name, released in the West as Kwirk.
 
 This project rebuilds the minigame so it runs on its own on Windows, macOS and Linux, as a record of how the original plays. It reads the stages, text and sounds from your own copy of *Shin Megami Tensei III Nocturne HD Remaster*.
 
-> **Want more than the original 20?** [Puzzle Boy Community Edition](https://github.com/hazeliscoding/puzzle-boy-community) is the Nocturne minigame expanded: new stages, a level editor, level packs, and the bonus stages and switch key that v0.2.0 had. Its Classic theme comes from your own copy of Nocturne, and without one it plays out of the box with its bundled Default theme. It has no release yet.
+> **Want more than the original 20?** [Puzzle Boy Community Edition](https://github.com/hazeliscoding/puzzle-boy-community) is the Nocturne minigame expanded: new stages, a level editor, level packs, and the bonus stages and switch key that v0.2.0 had. Its Classic theme comes from your own copy of Nocturne, and without one it plays out of the box with its bundled Default theme. Download it from its [releases](https://github.com/hazeliscoding/puzzle-boy-community/releases).
 
 > **Status:** early development. The original's rules are decoded and implemented, and all 20 stages can be played from your install with the original's board look, camera, timing, sound, HUD, dialogue, menu and an animated Jack-o'-Lantern. Solutions recorded in the original clear every stage in the port. See [ROADMAP.md](ROADMAP.md).
 
