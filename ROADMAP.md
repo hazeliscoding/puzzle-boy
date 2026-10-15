@@ -283,6 +283,8 @@ Community Edition's Classic theme draws the original with this port's code, so t
 
 **Done when** the moved code differs from this port's last copy only in namespace, visibility and citations, no test is lost, and every gate passes.
 
+[v0.3.0](https://github.com/hazeliscoding/puzzle-boy/releases/tag/v0.3.0) published the split (PR #3): the original's 20 stages on the shared engine, after the start checks passed on all three systems ([run 38775719377](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38775719377)).
+
 ## Cross-repo ledger (2026.10.15)
 
 | Repo | Role | Engine pin |
