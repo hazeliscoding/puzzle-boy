@@ -3,7 +3,7 @@
 > [!TIP]
 > **TL;DR:** The board is unlit, textured from the game's own atlas, with see-through glass walls and a glowing goal. Jack is skinned on the CPU and toon-shaded. The HUD keeps the original's 1920×1080 layout at any window size, and all text goes through a TextMeshPro distance-field renderer written for the CPU. The finer numbers were checked against gameplay footage.
 
-**Read time:** 5 minutes · **Code:** `Hud.cs`, `TextRenderer.cs`, and `BoardView.cs`, `CharacterModel.cs` and `CharacterView.cs` in the engine's `PuzzleBoy.Rendering`
+**Read time:** 5 minutes · **Code:** `Hud.cs`, `TextRenderer.cs`, `BoardView.cs`, `CharacterModel.cs` and `CharacterView.cs` in the engine's `PuzzleBoy.Rendering`
 
 ## Coordinates
 

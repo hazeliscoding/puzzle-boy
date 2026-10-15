@@ -285,15 +285,28 @@ Community Edition's Classic theme draws the original with this port's code, so t
 
 [v0.3.0](https://github.com/hazeliscoding/puzzle-boy/releases/tag/v0.3.0) published the split (PR #3): the original's 20 stages on the shared engine, after the start checks passed on all three systems ([run 38775719377](https://github.com/hazeliscoding/puzzle-boy/actions/runs/38775719377)).
 
+## M7: Shared original UI (2026.10.15)
+
+Community Edition's Classic theme shows the original's HUD, controls and menus, so the code that draws them moves to the engine too, as in M6. Nothing about what this port shows, or when, may change.
+
+- [x] Move `Hud` (with `UiLayout`, `UiSheets`, `HudState` and `BarSet`), `TextRenderer` and `BakedText`, `Menu`, `MenuItem` and `KeyRepeat`, and `Dialogue` to the engine's `PuzzleBoy.Rendering`. `Dialogue` goes too because `Hud.DrawDialogue` takes one; when the Manikin Kid talks stays in `PuzzleBoyGame`.
+- [x] Use them here, pinned at engine `49a07d8`, and delete the copies.
+  - Evidence (observed): each moved file diffed against `83c9565`, the last commit before the move. 8 files, 1,081 lines; 19 lines changed and 1 line removed. Every change is the namespace (8), `internal` to `public` on a type (11), or the `using PuzzleBoy.Rendering;` that `Hud.cs` no longer needs inside that namespace. No citation, statement, constant or expression changed.
+  - 28 of the 51 tests moved with the code: Hud 10, TextRenderer 10, Menu 4, Dialogue 4. The engine went from 238 to 266, and 23 stay here (Controls 17, PreservationScope 6). `ControlsTests` stays whole: every case reads `PuzzleBoyGame`'s key tables.
+  - `PuzzleBoy no-game-here` prints the same missing-game message from a debug build.
+  - Not checked: a screen drawn from the owner's install. The code is the same, but the screen wasn't compared.
+
+**Done when** the moved code differs from this port's last copy only in namespace and visibility, no test is lost, and every gate passes.
+
 ## Cross-repo ledger (2026.10.15)
 
 | Repo | Role | Engine pin |
 |---|---|---|
 | [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine) | Headless rules (`PuzzleBoy.Rules`), plus reading (`PuzzleBoy.Nocturne`) and drawing (`PuzzleBoy.Rendering`) the player's own Nocturne files. Not a game. | — |
-| [puzzle-boy](https://github.com/hazeliscoding/puzzle-boy) (this repo, `split/three-repos`, draft PR #3) | The preservation port: the original 20 stages from the player's own copy. | `2a38379` |
+| [puzzle-boy](https://github.com/hazeliscoding/puzzle-boy) (this repo) | The preservation port: the original 20 stages from the player's own copy. | `49a07d8` on `shared-ui` (M7), `2a38379` on `main` |
 | [puzzle-boy-community](https://github.com/hazeliscoding/puzzle-boy-community) | The minigame expanded: new stages, editor, packs, bonus stages; Default theme bundled, Classic theme from the player's copy. | `2a38379` |
 
-Both games must pin the same engine commit. An engine change lands there first, then both bump with `build: bump engine to <short-sha>`.
+Both games must pin the same engine commit. An engine change lands there first, then both bump with `build: bump engine to <short-sha>`. Community bumps to `49a07d8` with its C7; until then the pins differ.
 
 **Definition of done, where it stands:** the engine (E1 to E3) and this port's split (M5, M6) are done, with CI green on GitHub. This port plays only the original 20 (`The_original_order_is_exactly_the_twenty_documented_files`, `The_original_order_holds_no_bonus_file`, `The_preservation_game_never_calls_Board_Switch`, `The_preservation_game_has_no_switch_or_stage_skip_key`). Community's C1 to C4 and C6 are done and C5 (its first release) is open; its own ROADMAP has the per-platform table. Still open: merging PR #3 (the owner's call), replaying the 20 stages from the owner's install since the split, signing, and hand-play on macOS and Linux.
 
