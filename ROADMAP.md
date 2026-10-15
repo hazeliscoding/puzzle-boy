@@ -47,7 +47,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 ## Decisions (2026.10.15)
 
 - **This port plays the original's 20 stages, and nothing else.** `OriginalStageOrder` replaces `PlayOrder.Files` in the game, and `GameAssets` loads only those files. The C switch, the switch's controls bar and PageUp/PageDown go. PageUp/PageDown predate M4 as a developer shortcut in v0.1.0, but the original has no stage skip, so it goes too. After stage 20 the board stays cleared, as in v0.1.0.
-- **Every key read as a press is in one table.** `PuzzleBoyGame.Presses` lists them, and `Pressed` throws on any other key. A test pins the table, so a switch or skip key can't come back unseen. Held keys (the directions and Escape) are read directly, as before.
+- **Every key read as a press is in one table.** `PuzzleBoyGame.Presses` lists them, and `Pressed` throws on any other key. A test pins the table and the direction table. Held keys (the directions and Escape) are read directly, as before, so a key read that way is outside what the tests see.
 - **The game-data guard skips submodules.** `git ls-files` lists the engine submodule as a directory, which stopped the check. The engine repo runs the same check on its own files. The positive control now adds a submodule to every scratch repo.
 - **CI needs the engine on GitHub.** `.gitmodules` names `https://github.com/hazeliscoding/puzzle-boy-engine.git`, which isn't published yet, so CI here can't check out until it is. Local clones override the URL in `.git/config` (AGENTS.md, Commands).
 
@@ -258,7 +258,7 @@ This repo goes back to being a faithful preservation port of the original 20 sta
   - The engine holds `PuzzleBoy.Rules` and 86 of the 164 tests (the Cell, Goal, LastMove, Pushing, Stage, Switch, Swivel, Undo and Walking tests), unchanged but for their namespace. `PlayOrder` isn't in the engine. The engine adds a stage authoring API and has 202 tests.
 - [x] Depend on the pinned engine and restore the original 20-stage campaign: no bonus stages, no switch key, no stage skipping.
   - The submodule is pinned at engine `99eaf06`, and `src/PuzzleBoy.Rules` is gone. 78 tests stayed here after the move. The bonus-order test gave way to 10 new ones, for 87.
-  - Tests prove the order is exactly the 20 documented files, each once, with none of the 23 bonus files; that `GameAssets` loads only those 20 from a bundle holding all 50; that the game never references `Board.Switch` (a metadata scan, with `Board.Step` as the positive control); and that no switch or skip key is read. Adding a `Board.Switch` call or a PageDown press fails them.
+  - Tests prove the order is exactly the 20 documented files, each once, with none of the 23 bonus files; that `GameAssets` loads only those 20 from a bundle holding all 50; that the game never references `Board.Switch` (a metadata scan, with `Board.Step` as the positive control); and that no switch or skip key is in the table of pressed keys or the direction table. Adding a `Board.Switch` call, or adding PageDown to either table, fails them.
   - `Hud.cs` is back to v0.1.0, and `PuzzleBoyGame.cs` differs from v0.1.0 only by the key table and the removed skip.
 - [x] Update the docs to tell the preservation port apart from Community Edition.
   - README, AGENTS.md and the docs. `docs/bonus-stages.md` stays as history, with a note that bonus play moved to Community Edition.
