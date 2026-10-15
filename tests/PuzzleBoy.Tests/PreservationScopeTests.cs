@@ -1,5 +1,6 @@
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using PuzzleBoy.Rendering;
 using PuzzleBoy.Rules;
 
 namespace PuzzleBoy.Tests;
@@ -50,24 +51,30 @@ public sealed class PreservationScopeTests
         Assert.Contains(nameof(Board.Step), BoardMembersTheGameUses());
     }
 
-    /// <summary>The names of the <see cref="Board"/> members the game's assembly references, read from its metadata.</summary>
+    /// <summary>
+    /// The names of the <see cref="Board"/> members the game's assembly and the engine's rendering library reference,
+    /// read from their metadata.
+    /// </summary>
     private static List<string> BoardMembersTheGameUses()
     {
-        using var pe = new PEReader(File.OpenRead(typeof(PuzzleBoyGame).Assembly.Location));
-        var metadata = pe.GetMetadataReader();
         var names = new List<string>();
-        foreach (var handle in metadata.MemberReferences)
+        foreach (var assembly in new[] { typeof(PuzzleBoyGame).Assembly, typeof(BoardView).Assembly })
         {
-            var member = metadata.GetMemberReference(handle);
-            if (member.Parent.Kind != HandleKind.TypeReference)
+            using var pe = new PEReader(File.OpenRead(assembly.Location));
+            var metadata = pe.GetMetadataReader();
+            foreach (var handle in metadata.MemberReferences)
             {
-                continue;
-            }
+                var member = metadata.GetMemberReference(handle);
+                if (member.Parent.Kind != HandleKind.TypeReference)
+                {
+                    continue;
+                }
 
-            var type = metadata.GetTypeReference((TypeReferenceHandle)member.Parent);
-            if (metadata.GetString(type.Namespace) == typeof(Board).Namespace && metadata.GetString(type.Name) == nameof(Board))
-            {
-                names.Add(metadata.GetString(member.Name));
+                var type = metadata.GetTypeReference((TypeReferenceHandle)member.Parent);
+                if (metadata.GetString(type.Namespace) == typeof(Board).Namespace && metadata.GetString(type.Name) == nameof(Board))
+                {
+                    names.Add(metadata.GetString(member.Name));
+                }
             }
         }
 

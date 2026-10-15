@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework.Input;
+using PuzzleBoy.Rendering;
 using PuzzleBoy.Rules;
 
 namespace PuzzleBoy.Tests;

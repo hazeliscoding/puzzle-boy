@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using PuzzleBoy.Nocturne;
+using PuzzleBoy.Rendering;
 
 namespace PuzzleBoy;
 

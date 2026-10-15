@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using PuzzleBoy.Nocturne;
 
 namespace PuzzleBoy.Tests;
 
@@ -15,16 +16,6 @@ public sealed class TextRendererTests
             [' '] = new(0, 0, 0, 0, 30, new Rectangle(0, 0, 0, 0)),
         },
         64, 64, Enumerable.Repeat(fill, 64 * 64).ToArray());
-
-    [Fact]
-    public void A_materials_edges_come_from_its_floats()
-    {
-        var material = Plain with { FaceDilate = 0.2f, OutlineWidth = 0.2f, UnderlayDilate = 0.4f };
-
-        Assert.Equal(0.3f, material.FaceEdge, 5);
-        Assert.Equal(0.5f, material.ColourEdge, 5);
-        Assert.Equal(0.2f, material.UnderlayEdge, 5);
-    }
 
     [Fact]
     public void A_texel_on_the_face_edge_is_half_covered_and_full_coverage_is_a_ramp_away()

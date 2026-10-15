@@ -1,3 +1,4 @@
+using PuzzleBoy.Nocturne;
 using PuzzleBoy.Rules;
 
 namespace PuzzleBoy;
