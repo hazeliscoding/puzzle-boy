@@ -30,6 +30,7 @@ flowchart LR
 
 ## Finding the install
 
+- **Beside the executable** comes first: a `smt3hd_Data` folder next to `PuzzleBoy`. It needs only the eight bundles the port reads (`pazzleboy`, `pazzleboy_en`, `common`, `common_en`, `ui_tex_en`, `ui_tex_keyboard_en`, `dvl0x150` and `font-en`, about 115 MB) in `smt3hd_Data/StreamingAssets/PC`, so the game can be uninstalled.
 - **Windows:** Steam's path from the registry, then `Program Files (x86)/Steam`.
 - **macOS:** `~/Library/Application Support/Steam`.
 - **Linux:** `~/.local/share/Steam`, `~/.steam/steam`, and the Flatpak location.

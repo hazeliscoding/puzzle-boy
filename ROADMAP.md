@@ -42,6 +42,7 @@ Puzzle Boy is a standalone, cross-platform rebuild of the Puzzle Boy minigame fr
 - **A switch key, a deliberate difference.** C hands control to the next visible character, in the order a goal arrival uses, and plays SE08 as the camera moves to it. With a switch, 05, 43 and 45 have solutions; 18, 27 and 47 hit the cap. The original has no switch to copy, so the key, the sound and the bar label are the port's.
 - **The collision check keeps the real cell.** Modelling the original's swapped x and y in all three places it checks for another character changes no result in the survey.
 - **Only stages with a known solution ship, easiest first.** Each bonus stage needs a solution that clears in the port. They're ordered by the pushes and turns in the solution found, so the tutorial-sized files (00, 01, 30, 31) come first.
+- **The bundles can sit beside the executable.** Without an argument, the game first looks for `smt3hd_Data` next to `PuzzleBoy`, then searches Steam. A player can copy the eight bundles it reads there and uninstall Nocturne. The release archives still ship no Atlus data.
 
 ## M0 findings (2026.10.14)
 

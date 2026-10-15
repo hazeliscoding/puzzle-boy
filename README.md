@@ -25,7 +25,7 @@ This repository contains no Atlus code or data: no stages, text, audio, textures
 ## Play
 
 1. Download the archive for your system from [Releases](https://github.com/hazeliscoding/puzzle-boy/releases) and unpack it.
-2. Run `PuzzleBoy` (`PuzzleBoy.exe` on Windows). It looks for the game in your Steam libraries. If no window opens, it didn't find the game: run it from a terminal with the folder that holds `smt3hd.exe`, for example `PuzzleBoy "D:\Games\smt3hd"`.
+2. Run `PuzzleBoy` (`PuzzleBoy.exe` on Windows). It looks for the game beside itself, then in your Steam libraries. If no window opens, it didn't find the game: run it from a terminal with the folder that holds `smt3hd.exe`, for example `PuzzleBoy "D:\Games\smt3hd"`.
 
 Arrow keys or WASD move, Q and E turn the view, V switches to overhead, Tab scrolls, C switches characters on bonus stages with several, F opens the menu (undo, restart, help, quit), Enter or Space confirms, Backspace cancels, PageUp and PageDown skip stages, and Escape quits. Bonus stages, the stage files the original ships but never plays, follow stage 20.
 
