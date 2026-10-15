@@ -283,6 +283,18 @@ Community Edition's Classic theme draws the original with this port's code, so t
 
 **Done when** the moved code differs from this port's last copy only in namespace, visibility and citations, no test is lost, and every gate passes.
 
+## Cross-repo ledger (2026.10.15)
+
+| Repo | Role | Engine pin |
+|---|---|---|
+| [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine) | Headless rules (`PuzzleBoy.Rules`), plus reading (`PuzzleBoy.Nocturne`) and drawing (`PuzzleBoy.Rendering`) the player's own Nocturne files. Not a game. | — |
+| [puzzle-boy](https://github.com/hazeliscoding/puzzle-boy) (this repo, `split/three-repos`, draft PR #3) | The preservation port: the original 20 stages from the player's own copy. | `2a38379` |
+| [puzzle-boy-community](https://github.com/hazeliscoding/puzzle-boy-community) | The minigame expanded: new stages, editor, packs, bonus stages; Default theme bundled, Classic theme from the player's copy. | `2a38379` |
+
+Both games must pin the same engine commit. An engine change lands there first, then both bump with `build: bump engine to <short-sha>`.
+
+**Definition of done, where it stands:** the engine (E1 to E3) and this port's split (M5, M6) are done, with CI green on GitHub. This port plays only the original 20 (`The_original_order_is_exactly_the_twenty_documented_files`, `The_original_order_holds_no_bonus_file`, `The_preservation_game_never_calls_Board_Switch`, `The_preservation_game_has_no_switch_or_stage_skip_key`). Community's C1 to C4 and C6 are done and C5 (its first release) is open; its own ROADMAP has the per-platform table. Still open: merging PR #3 (the owner's call), replaying the 20 stages from the owner's install since the split, signing, and hand-play on macOS and Linux.
+
 ## Later
 
 - Discord Rich Presence: the stage you're on ("Stage 7 of 20") and time played, with a setting to turn it off. Needs a Discord application, whose name and image come from the brand (no Atlus art), and an MIT client library such as DiscordRichPresence. It does nothing when Discord isn't running.
