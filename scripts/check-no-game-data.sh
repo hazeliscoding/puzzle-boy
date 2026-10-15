@@ -12,6 +12,8 @@ report() {
 
 # Asset formats, recognized by their first bytes rather than by name.
 while IFS= read -r -d '' file; do
+    # A submodule is listed as its directory; its own repo runs this check on its files.
+    [ -f "$file" ] || continue
     magic=$(head -c 12 "$file" | od -An -tx1 | tr -d ' \n')
     case "$magic" in
         556e6974794653*) report "$file: Unity asset bundle" ;;
