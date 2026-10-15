@@ -312,15 +312,14 @@ Both games must pin the same engine commit. An engine change lands there first, 
 
 ## Later
 
-- Discord Rich Presence: the stage you're on ("Stage 7 of 20") and time played, with a setting to turn it off. Needs a Discord application, whose name and image come from the brand (no Atlus art), and an MIT client library such as DiscordRichPresence. It does nothing when Discord isn't running.
-- An Android build. MonoGame targets Android, and the rules library carries over as is. A phone has no Steam install, so the player copies the few bundles Puzzle Boy reads from their PC install (about 85 MB, most of it `common`) and picks them in the app. Needs touch controls: swipe to move, buttons to turn the view.
+- Nothing for now. Features the original never had go to Community Edition.
 
 ## Not planned
 
 - Shipping or downloading any Atlus asset.
 - Circumventing Denuvo, patching the original game or modding it.
 - Nocturne's other minigames.
-- Anything the original lacks: bonus stages, a switch key, stage skipping, a stage editor, custom stage packs, and the original's unused fifth □ menu item, Bonus, whose label has no text in the game's tables. They belong to Community Edition (M5), along with the seven unsettled stage files.
+- Anything the original lacks: bonus stages, a switch key, stage skipping, a stage editor, custom stage packs, and the original's unused fifth □ menu item, Bonus, whose label has no text in the game's tables. They belong to Community Edition (M5), along with the seven unsettled stage files. Discord Rich Presence and an Android build moved there too (2026.10.15).
 
 ## How we'll know it works
 
