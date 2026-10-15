@@ -238,6 +238,21 @@ The stage files the original ships but never plays, after stage 20. See the deci
 
 **Done when** every bonus stage that ships has a solution that clears it in the port, and the switch's rules have tests.
 
+## M5: Split into three repos (started 2026.10.14)
+
+This repo goes back to being a faithful preservation port of the original 20 stages. The rules move to a shared engine, and everything the original never had moves to a standalone Community Edition that needs no Nocturne.
+
+- **Three peer repos** in one local folder: `puzzle-boy-engine` (the headless rules, `PuzzleBoy.Rules`), `puzzle-boy` (this repo) and `puzzle-boy-community`. Both games use the engine as a pinned git submodule at `external/puzzle-boy-engine`, with project references to its source. No NuGet feed, and no floating `main`: an engine change is committed there first, then each consumer bumps its pin.
+- **Ownership.** The original 20-file order stays here. The 23-file bonus order, the switch key and stage skipping move to Community, which can import the bonus stages from the player's own install. `Board.Switch()` stays in the engine; this port no longer calls it. The M4 research and its record above stay as they are.
+- **Baseline** (observed, before any change): HEAD `410fc89`, tags `v0.1.0` and `v0.2.0`, local tag `pre-split-baseline` on `410fc89`. Build clean, 164 tests pass, format clean, and the no-game-data check and its positive control pass. `PlayOrder.Files` is `2, 4, 32, 8, 38, 36, 37, 48, 42, 49, 40, 20, 22, 13, 21, 24, 14, 10, 25, 26`; `PlayOrder.Bonus` is `1, 30, 31, 0, 3, 9, 35, 43, 5, 6, 33, 7, 19, 47, 39, 41, 45, 34, 12, 46, 15, 11, 44`. `re/` is local and untouched.
+- The split happens on the `split/three-repos` branch. Nothing is pushed and no GitHub repo is created until the owner says so.
+
+- [ ] Extract the rules into `puzzle-boy-engine`, with their tests.
+- [ ] Depend on the pinned engine and restore the original 20-stage campaign: no bonus stages, no switch key, no stage skipping.
+- [ ] Update the docs to tell the preservation port apart from Community Edition.
+
+**Done when** this repo builds and tests against the pinned engine, plays exactly the 20 original stages, and passes every CI gate including the no-game-data check.
+
 ## Later
 
 - A stage editor. The original ships a developer editor (`pbEdit`).
