@@ -1,7 +1,7 @@
 # Architecture
 
 > [!TIP]
-> **TL;DR:** There are two projects, plus the engine. The engine, [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine), is a git submodule in `external/puzzle-boy-engine` that Community Edition shares. Its `PuzzleBoy.Rules` holds the game's logic, with no graphics and no file access, so tests drive it with plain bytes. Its `PuzzleBoy.Nocturne` reads your install's bundles, and its `PuzzleBoy.Rendering` draws the board and Jack and plays the sounds. `PuzzleBoy` is the MonoGame app: it reads everything from your install once at startup, then runs the original's 30-tick loop and draws the HUD, dialogue and menu.
+> **TL;DR:** There are two projects, plus the engine. The engine, [puzzle-boy-engine](https://github.com/hazeliscoding/puzzle-boy-engine), is a git submodule in `external/puzzle-boy-engine` that Community Edition shares. Its `PuzzleBoy.Rules` holds the game's logic, with no graphics and no file access, so tests drive it with plain bytes. Its `PuzzleBoy.Nocturne` reads your install's bundles, and its `PuzzleBoy.Rendering` draws the board, Jack, the HUD, dialogue and menu and plays the sounds. `PuzzleBoy` is the MonoGame app: it reads everything from your install once at startup, then runs the original's 30-tick loop and decides what shows when.
 
 **Read time:** 4 minutes
 
@@ -15,19 +15,20 @@ flowchart LR
     subgraph app["PuzzleBoy (MonoGame)"]
         order["OriginalStageOrder<br>which files, in what order"] --> ga
         ga["GameAssets<br>everything, decoded once"] --> loop["PuzzleBoyGame<br>the tick loop"]
-        loop --> hud["Hud, TextRenderer,<br>dialogue and menu"]
     end
     subgraph nocturne["PuzzleBoy.Nocturne, from the engine"]
         gi["GameInstall<br>finds and reads the bundles"]
     end
     subgraph rendering["PuzzleBoy.Rendering, from the engine"]
         views["BoardView, CharacterView,<br>ViewCamera, MoveAnimation, Sounds"]
+        hud["Hud, TextRenderer,<br>Dialogue and Menu"]
     end
     subgraph rules["PuzzleBoy.Rules, from the engine"]
         stage["Stage<br>parses 828-byte files"] --> board["Board<br>steps, pushes, swivels, undo"]
     end
     gi --> ga
     loop --> views
+    loop --> hud
     bundles --> gi
     ga -- "stage bytes" --> stage
     loop -- "Step, Undo, Retry" --> board
@@ -77,7 +78,7 @@ sequenceDiagram
 | `GameInstall` | Finds the Steam install and reads bundles with AssetsTools.NET (engine, `PuzzleBoy.Nocturne`) |
 | `GameAssets` | Reads and decodes every asset once at startup, in about 2 seconds |
 | `PuzzleBoyGame` | The tick loop: input, menus, dialogue, stage flow |
-| `ViewCamera` | The follow camera, view turns, the overhead view and the quake (engine, `PuzzleBoy.Rendering`, like the next three and `Sounds`) |
+| `ViewCamera` | The follow camera, view turns, the overhead view and the quake (engine, `PuzzleBoy.Rendering`, like the next five and `Sounds`) |
 | `MoveAnimation` | Replays one move over its ticks |
 | `BoardView` | Board geometry, glass walls, outlines, the goal and the backdrop |
 | `CharacterModel`, `CharacterView` | Pose and skin Jack each tick, then draw him with his shadow and glow |
